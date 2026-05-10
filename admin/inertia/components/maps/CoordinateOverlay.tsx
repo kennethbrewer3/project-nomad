@@ -3,6 +3,7 @@ type CoordinateOverlayProps = {
   longitude: number
   x: number
   y: number
+  label?: string
 }
 
 export default function CoordinateOverlay({
@@ -10,6 +11,7 @@ export default function CoordinateOverlay({
   longitude,
   x,
   y,
+  label,
 }: CoordinateOverlayProps) {
   return (
     <div
@@ -19,7 +21,7 @@ export default function CoordinateOverlay({
         top: y - 36,
       }}
     >
-      {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      {label ?? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`}
     </div>
   )
 }

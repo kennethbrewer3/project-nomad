@@ -3,6 +3,9 @@ import { Head, Link, router } from '@inertiajs/react'
 
 import MapsLayout from '~/layouts/MapsLayout'
 import MapComponent from '~/components/maps/MapComponent'
+import type { MapDrawControls } from '~/components/maps/MapComponent'
+import DrawToolsSelector from '~/components/maps/DrawToolsSelector'
+import type { DrawMode } from '~/components/maps/DrawToolsSelector'
 import StyledButton from '~/components/StyledButton'
 import { IconArrowLeft, IconCrosshair, IconMapPin, IconPlaneTilt } from '@tabler/icons-react'
 import { FileEntry } from '../../types/files'
@@ -23,6 +26,8 @@ export default function Maps(props: {
   const [coordinateSearch, setCoordinateSearch] = useState('')
   const [mapCommand, setMapCommand] = useState<MapCommand | null>(null)
   const [showCoordinatesEnabled, setShowCoordinatesEnabled] = useState(true)
+  const [drawMode, setDrawMode] = useState<DrawMode>('marker')
+  const [drawControls, setDrawControls] = useState<MapDrawControls | null>(null)
 
   const parseCoordinates = () => {
     const [latRaw, lngRaw] = coordinateSearch.split(',').map((value) => value.trim())
@@ -119,6 +124,15 @@ export default function Maps(props: {
               <IconCrosshair size={18}/>
             </button>
 
+            <DrawToolsSelector
+              drawMode={drawMode}
+              drawPointCount={drawControls?.drawPointCount ?? 0}
+              onModeChange={setDrawMode}
+              onFinishPolygon={() => drawControls?.finishPolygon()}
+              onClear={() => drawControls?.clearDrawing()}
+              onMouseEnter={() => setIsHoveringUI(true)}
+            />
+
             <Link href="/settings/maps" className="mr-4">
               <StyledButton variant="primary" icon="IconSettings">
                 Manage Map Regions
@@ -156,6 +170,8 @@ export default function Maps(props: {
             mapCommand={mapCommand}
             isHoveringUI={isHoveringUI}
             showCoordinatesEnabled={showCoordinatesEnabled}
+            drawMode={drawMode}
+            onDrawControlsChange={setDrawControls}
           />
         </div>
       </div>

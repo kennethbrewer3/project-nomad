@@ -1,5 +1,6 @@
 import { MapService } from '#services/map_service'
 import MapMarker from '#models/map_marker'
+import MapZone from '#models/map_zone'
 import {
   assertNotPrivateUrl,
   downloadCollectionValidator,
@@ -238,5 +239,89 @@ export default class MapsController {
     }
     await marker.delete()
     return { message: 'Marker deleted' }
+  }
+
+  async listZones({}: HttpContext) {
+    return await MapZone.query().orderBy('created_at', 'asc')
+  }
+
+  async createZone({ request }: HttpContext) {
+    const payload = await request.validateUsing(
+      vine.compile(
+        vine.object({
+          name: vine.string().trim().minLength(1).maxLength(255),
+          zone_type: vine.enum(['circle', 'ellipse', 'rectangle', 'polygon', 'line']),
+          geometry: vine.any(),
+          stroke_color: vine.string().trim().maxLength(7).optional(),
+          fill_color: vine.string().trim().maxLength(7).nullable().optional(),
+          stroke_width: vine.number().min(1).max(20).optional(),
+          fill_opacity: vine.number().min(0).max(1).optional(),
+          visible: vine.boolean().optional(),
+          notes: vine.string().trim().nullable().optional(),
+        })
+      )
+    )
+
+    return await MapZone.create({
+      name: payload.name,
+      zone_type: payload.zone_type,
+      geometry: payload.geometry,
+      stroke_color: payload.stroke_color ?? '#2563eb',
+      fill_color: payload.fill_color ?? null,
+      stroke_width: payload.stroke_width ?? 2,
+      fill_opacity: payload.fill_opacity ?? 0.2,
+      visible: payload.visible ?? true,
+      notes: payload.notes ?? null,
+    })
+  }
+
+  async updateZone({ request, response }: HttpContext) {
+    const { id } = request.params()
+    const zone = await MapZone.find(id)
+
+    if (!zone) {
+      return response.status(404).send({ message: 'Zone not found' })
+    }
+
+    const payload = await request.validateUsing(
+      vine.compile(
+        vine.object({
+          name: vine.string().trim().minLength(1).maxLength(255).optional(),
+          zone_type: vine.enum(['circle', 'ellipse', 'rectangle', 'polygon', 'line']).optional(),
+          geometry: vine.any().optional(),
+          stroke_color: vine.string().trim().maxLength(7).optional(),
+          fill_color: vine.string().trim().maxLength(7).nullable().optional(),
+          stroke_width: vine.number().min(1).max(20).optional(),
+          fill_opacity: vine.number().min(0).max(1).optional(),
+          visible: vine.boolean().optional(),
+          notes: vine.string().trim().nullable().optional(),
+        })
+      )
+    )
+
+    if (payload.name !== undefined) zone.name = payload.name
+    if (payload.zone_type !== undefined) zone.zone_type = payload.zone_type
+    if (payload.geometry !== undefined) zone.geometry = payload.geometry
+    if (payload.stroke_color !== undefined) zone.stroke_color = payload.stroke_color
+    if (payload.fill_color !== undefined) zone.fill_color = payload.fill_color
+    if (payload.stroke_width !== undefined) zone.stroke_width = payload.stroke_width
+    if (payload.fill_opacity !== undefined) zone.fill_opacity = payload.fill_opacity
+    if (payload.visible !== undefined) zone.visible = payload.visible
+    if (payload.notes !== undefined) zone.notes = payload.notes
+
+    await zone.save()
+    return zone
+  }
+
+  async deleteZone({ request, response }: HttpContext) {
+    const { id } = request.params()
+    const zone = await MapZone.find(id)
+
+    if (!zone) {
+      return response.status(404).send({ message: 'Zone not found' })
+    }
+
+    await zone.delete()
+    return { message: 'Zone deleted' }
   }
 }

@@ -84,3 +84,78 @@ export type MapMarkerResponse = {
   created_at: string
   updated_at?: string
 }
+
+export type LatLng = {
+  latitude: number
+  longitude: number
+}
+
+export type MapZoneType = 'circle' | 'ellipse' | 'rectangle' | 'polygon' | 'line'
+
+export type MapZoneGeometry =
+  | {
+      type: 'circle'
+      center: LatLng
+      radiusMeters: number
+    }
+  | {
+      type: 'ellipse'
+      center: LatLng
+      radiusXmeters: number
+      radiusYmeters: number
+      rotationDegrees: number
+    }
+  | {
+      type: 'rectangle'
+      mode: 'corner_to_corner' | 'center_out'
+      bounds: {
+        north: number
+        south: number
+        east: number
+        west: number
+      }
+      rotationDegrees?: number
+    }
+  | {
+      type: 'polygon'
+      lineMode: 'straight' | 'curve'
+      points: LatLng[]
+      closed: true
+    }
+  | {
+      type: 'line'
+      lineMode: 'straight' | 'curve'
+      points: LatLng[]
+      markerAId?: number | null
+      markerBId?: number | null
+      distanceMeters?: number
+    }
+
+export type CreateMapZonePayload = {
+  name: string
+  zone_type: MapZoneType
+  geometry: MapZoneGeometry
+  stroke_color?: string
+  fill_color?: string | null
+  stroke_width?: number
+  fill_opacity?: number
+  visible?: boolean
+  notes?: string | null
+}
+
+export type UpdateMapZonePayload = Partial<CreateMapZonePayload>
+
+export type MapZoneResponse = {
+  id: number
+  name: string
+  zone_type: MapZoneType
+  geometry: MapZoneGeometry
+  stroke_color: string
+  fill_color?: string | null
+  stroke_width: number
+  fill_opacity: number
+  visible: boolean
+  notes?: string | null
+  created_at: string
+  updated_at?: string
+}

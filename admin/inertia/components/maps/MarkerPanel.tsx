@@ -14,6 +14,7 @@ import type { IconType } from 'react-icons'
 import * as TablerIcons from '@tabler/icons-react'
 import type { IconProps } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
+import type { ReactNode } from 'react'
 
 import { PIN_COLORS } from '~/hooks/useMapMarkers'
 import type { MapMarker } from '~/hooks/useMapMarkers'
@@ -25,6 +26,8 @@ interface MarkerPanelProps {
   onSelect: (id: number | null) => void
   onToggleVisibility: (id: number, visible: boolean) => void
   selectedMarkerId: number | null
+  zonePanel?: ReactNode
+  zoneCount?: number
 }
 
 type SortField = 'name' | 'color' | 'visibility' | 'icon'
@@ -175,8 +178,11 @@ export default function MarkerPanel({
                                       onSelect,
                                       onToggleVisibility,
                                       selectedMarkerId,
+                                      zonePanel,
+                                      zoneCount = 0,
                                     }: MarkerPanelProps) {
   const [open, setOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'pins' | 'zones'>('pins')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -361,14 +367,14 @@ export default function MarkerPanel({
         type="button"
         onClick={() => setOpen(true)}
         className="absolute left-4 top-[72px] z-40 flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-primary/95 px-3 py-2 shadow-lg backdrop-blur-sm transition-colors hover:bg-surface-secondary"
-        title="Show saved locations"
+        title="Show map items"
       >
         <IconMapPin size={18} className="text-desert-orange" />
-        <span className="text-sm font-medium text-text-primary">Pins</span>
+        <span className="text-sm font-medium text-text-primary">Map Items</span>
 
-        {markers.length > 0 && (
+        {markers.length + zoneCount > 0 && (
           <span className="ml-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-desert-orange px-1 text-[11px] font-bold text-white">
-            {markers.length}
+            {markers.length + zoneCount}
           </span>
         )}
       </button>
@@ -376,16 +382,16 @@ export default function MarkerPanel({
   }
 
   return (
-    <div className="absolute left-4 top-[72px] z-40 w-72 rounded-lg border border-border-subtle bg-surface-primary/95 shadow-lg backdrop-blur-sm">
+    <div className="absolute left-4 top-[72px] z-40 w-80 rounded-lg border border-border-subtle bg-surface-primary/95 shadow-lg backdrop-blur-sm">
       <div className="flex items-center justify-between border-b border-border-subtle px-3 py-2.5">
         <div className="flex items-center gap-2">
           <IconMapPin size={18} className="text-desert-orange" />
 
-          <span className="text-sm font-semibold text-text-primary">Saved Locations</span>
+          <span className="text-sm font-semibold text-text-primary">Map Items</span>
 
-          {markers.length > 0 && (
+          {markers.length + zoneCount > 0 && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-desert-orange px-1 text-[11px] font-bold text-white">
-              {markers.length}
+              {markers.length + zoneCount}
             </span>
           )}
         </div>
@@ -400,6 +406,32 @@ export default function MarkerPanel({
         </button>
       </div>
 
+      <div className="grid grid-cols-2 border-b border-border-subtle p-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('pins')}
+          className={`rounded px-2 py-1.5 text-sm font-medium transition-colors ${
+            activeTab === 'pins' ? 'bg-[#424420] text-white' : 'text-text-secondary hover:bg-surface-secondary'
+          }`}
+        >
+          Pins ({markers.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('zones')}
+          className={`rounded px-2 py-1.5 text-sm font-medium transition-colors ${
+            activeTab === 'zones' ? 'bg-[#424420] text-white' : 'text-text-secondary hover:bg-surface-secondary'
+          }`}
+        >
+          Zones ({zoneCount})
+        </button>
+      </div>
+
+      {activeTab === 'zones' && zonePanel ? (
+        zonePanel
+      ) : (
+        <>
       <div className="space-y-2 border-b border-border-subtle px-3 py-2">
         <input
           type="search"
@@ -535,6 +567,8 @@ export default function MarkerPanel({
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   )
 }
