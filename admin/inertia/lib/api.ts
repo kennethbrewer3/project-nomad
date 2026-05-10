@@ -11,7 +11,14 @@ import { catchInternal } from './util'
 import { NomadChatResponse, NomadInstalledModel, NomadOllamaModel, OllamaChatRequest } from '../../types/ollama'
 import BenchmarkResult from '#models/benchmark_result'
 import { BenchmarkType, RunBenchmarkResponse, SubmitBenchmarkResponse, UpdateBuilderTagResponse } from '../../types/benchmark'
-import type {CreateMapMarkerPayload, MapMarkerResponse, UpdateMapMarkerPayload} from '../../types/maps'
+import type {
+  CreateMapMarkerPayload,
+  CreateMapZonePayload,
+  MapMarkerResponse,
+  MapZoneResponse,
+  UpdateMapMarkerPayload,
+  UpdateMapZonePayload,
+} from '../../types/maps'
 
 class API {
   private client: AxiosInstance
@@ -653,6 +660,33 @@ class API {
   async deleteMapMarker(id: number) {
     return catchInternal(async () => {
       await this.client.delete(`/maps/markers/${id}`)
+    })()
+  }
+
+  async listMapZones() {
+    return catchInternal(async () => {
+      const response = await this.client.get<MapZoneResponse[]>('/maps/zones')
+      return response.data
+    })()
+  }
+
+  async createMapZone(data: CreateMapZonePayload) {
+    return catchInternal(async () => {
+      const response = await this.client.post<MapZoneResponse>('/maps/zones', data)
+      return response.data
+    })()
+  }
+
+  async updateMapZone(id: number, data: UpdateMapZonePayload) {
+    return catchInternal(async () => {
+      const response = await this.client.patch<MapZoneResponse>(`/maps/zones/${id}`, data)
+      return response.data
+    })()
+  }
+
+  async deleteMapZone(id: number) {
+    return catchInternal(async () => {
+      await this.client.delete(`/maps/zones/${id}`)
     })()
   }
 
