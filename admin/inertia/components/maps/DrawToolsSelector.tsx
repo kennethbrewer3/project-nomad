@@ -7,9 +7,7 @@ export type DrawMode =
   | 'rectangle_corner'
   | 'rectangle_center'
   | 'polygon'
-  | 'polygon_curve'
   | 'line'
-  | 'curve'
   | 'marker_distance'
 
 type DrawTool = {
@@ -26,9 +24,7 @@ const DRAW_TOOLS: DrawTool[] = [
   { mode: 'rectangle_corner', label: 'Corner rectangle', title: 'Draw rectangles from corner to corner', icon: '▭' },
   { mode: 'rectangle_center', label: 'Center rectangle', title: 'Draw rectangles from center outward', icon: '▣' },
   { mode: 'polygon', label: 'Polygon', title: 'Draw straight polygon zones', icon: '⬠' },
-  { mode: 'polygon_curve', label: 'Curved polygon', title: 'Draw curved polygon zones', icon: '⌁' },
   { mode: 'line', label: 'Line', title: 'Draw distance lines', icon: '╱' },
-  { mode: 'curve', label: 'Curve', title: 'Draw curved distance lines', icon: '∿' },
   { mode: 'marker_distance', label: 'Marker distance', title: 'Select two pins to draw a distance line', icon: '↔' },
 ]
 
@@ -51,7 +47,7 @@ export default function DrawToolsSelector({
 }: DrawToolsSelectorProps) {
   const [open, setOpen] = useState(false)
   const selectedTool = DRAW_TOOLS.find((tool) => tool.mode === drawMode) ?? DRAW_TOOLS[0]
-  const showPolygonFinish = drawMode === 'polygon' || drawMode === 'polygon_curve'
+  const showPolygonFinish = drawMode === 'polygon'
 
   return (
     <div className="relative flex items-center gap-1" onMouseEnter={onMouseEnter}>

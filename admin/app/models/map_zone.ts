@@ -34,6 +34,12 @@ export default class MapZone extends BaseModel {
   @column()
   declare notes: string | null
 
+  @column()
+  declare navigation_time: string | null
+
+  @column()
+  declare navigation_direction: string | null
+
   @column.dateTime({ autoCreate: true })
   declare created_at: DateTime
 
