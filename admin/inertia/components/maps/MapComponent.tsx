@@ -7,17 +7,17 @@ import Map, {
   ScaleControl,
   Source,
 } from 'react-map-gl/maplibre'
-import type { MapLayerMouseEvent, MapRef } from 'react-map-gl/maplibre'
+import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/maplibre'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-import { Protocol } from 'pmtiles'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {Protocol} from 'pmtiles'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 
-import { useMapMarkers } from '~/hooks/useMapMarkers'
-import { useMapZones } from '~/hooks/useMapZones'
-import type { MapZone } from '~/hooks/useMapZones'
-import type { LatLng, MapZoneGeometry, MapZoneType } from '../../../types/maps'
+import {useMapMarkers} from '~/hooks/useMapMarkers'
+import {useMapZones} from '~/hooks/useMapZones'
+import type {MapZone} from '~/hooks/useMapZones'
+import type {LatLng, MapZoneGeometry, MapZoneType} from '../../../types/maps'
 
 import MarkerPin from './MarkerPin'
 import MarkerPanel from './MarkerPanel'
@@ -28,7 +28,7 @@ import MapMarkerFormPopup from './MapMarkerFormPopup'
 import ScaleUnitToggle from './ScaleUnitSelector'
 import ViewMapZonePopup from './ViewMapZonePopup'
 import MapZoneFormPopup from './MapZoneFormPopup'
-import type { DrawMode } from './DrawToolsSelector'
+import type {DrawMode} from './DrawToolsSelector'
 
 type ScaleUnit = 'imperial' | 'metric' | 'nautical'
 
@@ -107,7 +107,8 @@ type ZoneDistanceLabel = {
   id: string
   longitude: number
   latitude: number
-  label: string
+  lines: string[]
+  alignRightOfName?: boolean
 }
 
 type RectangleGeometry = Extract<MapZoneGeometry, { type: 'rectangle' }>
@@ -176,7 +177,7 @@ const zoneAnchor = (zone: MapZone): LatLng => {
     }
   }
 
-  return { longitude: 0, latitude: 0 }
+  return {longitude: 0, latitude: 0}
 }
 
 const zoneDistanceLabels = (zone: MapZone, unit: ScaleUnit): ZoneDistanceLabel[] => {
@@ -188,7 +189,7 @@ const zoneDistanceLabels = (zone: MapZone, unit: ScaleUnit): ZoneDistanceLabel[]
         id: `${zone.id}-radius`,
         longitude: geometry.center.longitude,
         latitude: geometry.center.latitude,
-        label: `r ${formatDistance(geometry.radiusMeters, unit)}`,
+        lines: [`r ${formatDistance(geometry.radiusMeters, unit)}`],
       },
     ]
   }
@@ -199,41 +200,64 @@ const zoneDistanceLabels = (zone: MapZone, unit: ScaleUnit): ZoneDistanceLabel[]
         id: `${zone.id}-radius-x`,
         longitude: geometry.center.longitude,
         latitude: geometry.center.latitude,
-        label: `rx ${formatDistance(geometry.radiusXmeters, unit)}`,
+        lines: [`rx ${formatDistance(geometry.radiusXmeters, unit)}`],
       },
       {
         id: `${zone.id}-radius-y`,
         longitude: geometry.center.longitude,
         latitude: geometry.center.latitude,
-        label: `ry ${formatDistance(geometry.radiusYmeters, unit)}`,
+        lines: [`ry ${formatDistance(geometry.radiusYmeters, unit)}`],
       },
     ]
   }
 
   if (geometry.type === 'rectangle') {
-    const northWest = { longitude: geometry.bounds.west, latitude: geometry.bounds.north }
-    const northEast = { longitude: geometry.bounds.east, latitude: geometry.bounds.north }
-    const southWest = { longitude: geometry.bounds.west, latitude: geometry.bounds.south }
+    const northWest = {longitude: geometry.bounds.west, latitude: geometry.bounds.north}
+    const northEast = {longitude: geometry.bounds.east, latitude: geometry.bounds.north}
+    const southWest = {longitude: geometry.bounds.west, latitude: geometry.bounds.south}
 
     return [
       {
         id: `${zone.id}-width`,
         ...midpoint(northWest, northEast),
-        label: formatDistance(distanceMeters(northWest, northEast), unit),
+        lines: [formatDistance(distanceMeters(northWest, northEast), unit)],
       },
       {
         id: `${zone.id}-height`,
         ...midpoint(northWest, southWest),
-        label: formatDistance(distanceMeters(northWest, southWest), unit),
+        lines: [formatDistance(distanceMeters(northWest, southWest), unit)],
       },
     ]
   }
 
-  if (geometry.type === 'polygon' || geometry.type === 'line') {
-    const points =
-      geometry.type === 'polygon' && geometry.closed
-        ? [...geometry.points, geometry.points[0]]
-        : geometry.points
+  if (geometry.type === 'line') {
+    const points = geometry.points
+
+    if (points.length < 2) return []
+
+    const startPoint = points[0]
+    const endPoint = points[points.length - 1]
+
+    return [
+      {
+        id: `${zone.id}-line-summary`,
+        ...zoneAnchor(zone),
+        lines: [
+          formatDistance(
+            geometry.distanceMeters ?? distanceMeters(startPoint, endPoint),
+            unit
+          ),
+          zone.navigationTime,
+        ].filter((line): line is string => Boolean(line)),
+        alignRightOfName: true,
+      },
+    ]
+  }
+
+  if (geometry.type === 'polygon') {
+    const points = geometry.closed
+      ? [...geometry.points, geometry.points[0]]
+      : geometry.points
 
     return points.slice(0, -1).map((point, index) => {
       const nextPoint = points[index + 1]
@@ -241,7 +265,7 @@ const zoneDistanceLabels = (zone: MapZone, unit: ScaleUnit): ZoneDistanceLabel[]
       return {
         id: `${zone.id}-segment-${index}`,
         ...midpoint(point, nextPoint),
-        label: formatDistance(distanceMeters(point, nextPoint), unit),
+        lines: [formatDistance(distanceMeters(point, nextPoint), unit)],
       }
     })
   }
@@ -257,7 +281,7 @@ const destinationPoint = (center: LatLng, bearingDegrees: number, meters: number
   const longitude1 = toRadians(center.longitude)
   const latitude2 = Math.asin(
     Math.sin(latitude1) * Math.cos(angularDistance) +
-      Math.cos(latitude1) * Math.sin(angularDistance) * Math.cos(bearing)
+    Math.cos(latitude1) * Math.sin(angularDistance) * Math.cos(bearing)
   )
   const longitude2 =
     longitude1 +
@@ -270,7 +294,7 @@ const destinationPoint = (center: LatLng, bearingDegrees: number, meters: number
 }
 
 const circleCoordinates = (center: LatLng, radiusMeters: number, steps = 96) => {
-  const coordinates = Array.from({ length: steps }, (_, index) =>
+  const coordinates = Array.from({length: steps}, (_, index) =>
     destinationPoint(center, (index / steps) * 360, radiusMeters)
   )
 
@@ -285,7 +309,7 @@ const ellipseCoordinates = (
   rotationDegrees: number,
   steps = 96
 ) => {
-  const coordinates = Array.from({ length: steps }, (_, index) => {
+  const coordinates = Array.from({length: steps}, (_, index) => {
     const angle = (index / steps) * Math.PI * 2
     const x = radiusXmeters * Math.cos(angle)
     const y = radiusYmeters * Math.sin(angle)
@@ -306,7 +330,7 @@ const zoneToFeature = (zone: MapZone) => {
   let geoJsonGeometry: any = null
 
   if (geometry.type === 'circle') {
-    geoJsonGeometry = { type: 'Polygon', coordinates: [circleCoordinates(geometry.center, geometry.radiusMeters)] }
+    geoJsonGeometry = {type: 'Polygon', coordinates: [circleCoordinates(geometry.center, geometry.radiusMeters)]}
   } else if (geometry.type === 'ellipse') {
     geoJsonGeometry = {
       type: 'Polygon',
@@ -320,7 +344,7 @@ const zoneToFeature = (zone: MapZone) => {
       ],
     }
   } else if (geometry.type === 'rectangle') {
-    const { north, south, east, west } = geometry.bounds
+    const {north, south, east, west} = geometry.bounds
     geoJsonGeometry = {
       type: 'Polygon',
       coordinates: [
@@ -335,7 +359,7 @@ const zoneToFeature = (zone: MapZone) => {
     }
   } else if (geometry.type === 'polygon') {
     const coordinates = geometry.points.map((point) => [point.longitude, point.latitude])
-    geoJsonGeometry = { type: 'Polygon', coordinates: [[...coordinates, coordinates[0]]] }
+    geoJsonGeometry = {type: 'Polygon', coordinates: [[...coordinates, coordinates[0]]]}
   } else if (geometry.type === 'line') {
     geoJsonGeometry = {
       type: 'LineString',
@@ -362,6 +386,38 @@ const drawPointToLatLng = (point: DrawPoint): LatLng => ({
   longitude: point.longitude,
   latitude: point.latitude,
 })
+
+const snapPointToAngleIncrement = (start: DrawPoint, point: DrawPoint, incrementDegrees = 5): DrawPoint => {
+  const latitudeScale = Math.cos(toRadians(start.latitude))
+  const deltaX = (point.longitude - start.longitude) * latitudeScale
+  const deltaY = point.latitude - start.latitude
+  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+
+  if (distance === 0 || !Number.isFinite(distance)) return point
+
+  const angle = Math.atan2(deltaY, deltaX)
+  const increment = toRadians(incrementDegrees)
+  const snappedAngle = Math.round(angle / increment) * increment
+  const snappedX = Math.cos(snappedAngle) * distance
+  const snappedY = Math.sin(snappedAngle) * distance
+
+  return {
+    longitude: start.longitude + snappedX / latitudeScale,
+    latitude: start.latitude + snappedY,
+  }
+}
+
+const formatLineAngle = (start: DrawPoint, end: DrawPoint) => {
+  const latitudeScale = Math.cos(toRadians(start.latitude))
+  const deltaX = (end.longitude - start.longitude) * latitudeScale
+  const deltaY = end.latitude - start.latitude
+
+  if (deltaX === 0 && deltaY === 0) return '0.00°'
+
+  const angle = (toDegrees(Math.atan2(deltaX, deltaY)) + 360) % 360
+
+  return `${angle.toFixed(2)}°`
+}
 
 const createRectangleGeometry = (
   first: DrawPoint,
@@ -434,27 +490,29 @@ const createPreviewGeometry = (
     )
   }
 
-  if (mode === 'polygon' || mode === 'polygon_curve') {
+  if (mode === 'polygon') {
     if (points.length < 2) {
       return {
         type: 'line',
-        lineMode: mode === 'polygon_curve' ? 'curve' : 'straight',
+        lineMode: 'straight',
         points: [drawPointToLatLng(first), drawPointToLatLng(previewPoint)],
       }
     }
 
+    const polygonPoints = [...points, previewPoint].map(drawPointToLatLng)
+
     return {
       type: 'polygon',
-      lineMode: mode === 'polygon_curve' ? 'curve' : 'straight',
-      points: [...points, previewPoint].map(drawPointToLatLng),
+      lineMode: 'straight',
+      points: polygonPoints,
       closed: true,
     }
   }
 
-  if (mode === 'line' || mode === 'curve') {
+  if (mode === 'line') {
     return {
       type: 'line',
-      lineMode: mode === 'curve' ? 'curve' : 'straight',
+      lineMode: 'straight',
       points: [drawPointToLatLng(first), drawPointToLatLng(previewPoint)],
       distanceMeters: distanceMeters(drawPointToLatLng(first), drawPointToLatLng(previewPoint)),
     }
@@ -482,7 +540,7 @@ const drawingMeasurementLabel = (
 
   if (mode === 'ellipse') {
     const radiusX = distanceMeters(firstLatLng, previewLatLng)
-    const radiusY = distanceMeters(firstLatLng, { longitude: first.longitude, latitude: previewPoint.latitude })
+    const radiusY = distanceMeters(firstLatLng, {longitude: first.longitude, latitude: previewPoint.latitude})
 
     return `Rx ${formatDistance(radiusX, unit)} · Ry ${formatDistance(radiusY, unit)}`
   }
@@ -493,18 +551,18 @@ const drawingMeasurementLabel = (
       previewPoint,
       mode === 'rectangle_center' ? 'center_out' : 'corner_to_corner'
     )
-    const northWest = { longitude: geometry.bounds.west, latitude: geometry.bounds.north }
-    const northEast = { longitude: geometry.bounds.east, latitude: geometry.bounds.north }
-    const southWest = { longitude: geometry.bounds.west, latitude: geometry.bounds.south }
+    const northWest = {longitude: geometry.bounds.west, latitude: geometry.bounds.north}
+    const northEast = {longitude: geometry.bounds.east, latitude: geometry.bounds.north}
+    const southWest = {longitude: geometry.bounds.west, latitude: geometry.bounds.south}
 
     return `${formatDistance(distanceMeters(northWest, northEast), unit)} × ${formatDistance(distanceMeters(northWest, southWest), unit)}`
   }
 
-  if (mode === 'line' || mode === 'curve') {
-    return formatDistance(distanceMeters(firstLatLng, previewLatLng), unit)
+  if (mode === 'line') {
+    return `${formatDistance(distanceMeters(firstLatLng, previewLatLng), unit)} · ${formatLineAngle(first, previewPoint)}`
   }
 
-  if (mode === 'polygon' || mode === 'polygon_curve') {
+  if (mode === 'polygon') {
     const previousPoint = points[points.length - 1]
     const segmentDistance = distanceMeters(drawPointToLatLng(previousPoint), previewLatLng)
     const totalDistance = [...points, previewPoint].slice(0, -1).reduce((sum, point, index, allPoints) => {
@@ -531,9 +589,11 @@ export default function MapComponent({
   const animationFrameRef = useRef<number | null>(null)
   const handledMapCommandIdRef = useRef<number | null>(null)
 
-  const { markers, addMarker, updateMarker, deleteMarker } = useMapMarkers()
-  const { zones, addZone, updateZone, deleteZone } = useMapZones()
+  const {markers, addMarker, updateMarker, deleteMarker} = useMapMarkers()
+  const {zones, addZone, updateZone, deleteZone} = useMapZones()
 
+  const [lineArrowImageReady, setLineArrowImageReady] = useState(false)
+  const [hiddenArrowZoneIds, setHiddenArrowZoneIds] = useState<Set<number>>(new Set())
   const [targetIndicator, setTargetIndicator] = useState<{ lng: number; lat: number } | null>(null)
   const [isDraggingMap, setIsDraggingMap] = useState(false)
   const [placingMarker, setPlacingMarker] = useState<{ lng: number; lat: number } | null>(null)
@@ -547,9 +607,31 @@ export default function MapComponent({
   const [hiddenNameZoneIds, setHiddenNameZoneIds] = useState<Set<number>>(new Set())
   const [drawPoints, setDrawPoints] = useState<DrawPoint[]>([])
   const [previewPoint, setPreviewPoint] = useState<DrawPoint | null>(null)
+  const [isShiftKeyDown, setIsShiftKeyDown] = useState(false)
   const [markerDistanceStartId, setMarkerDistanceStartId] = useState<number | null>(null)
   const [hasUnsavedMarkerChanges, setHasUnsavedMarkerChanges] = useState(false)
   const [showCoordinates, setShowCoordinates] = useState(false)
+  const [hoveredLineZoneId, setHoveredLineZoneId] = useState<number | null>(null)
+  const [snapRouteStart, setSnapRouteStart] = useState<{
+    zoneId: number
+    endpoint: 'start' | 'end'
+    point: LatLng
+  } | null>(null)
+
+  const zoneArrowGeoJson = useMemo(
+    () => ({
+      type: 'FeatureCollection',
+      features: zones
+        .filter(
+          (zone) =>
+            zone.visible &&
+            zone.geometry.type === 'line' &&
+            !hiddenArrowZoneIds.has(zone.id)
+        )
+        .map(zoneToFeature),
+    }),
+    [hiddenArrowZoneIds, zones]
+  )
 
   const getInitialScaleUnit = (): ScaleUnit => {
     const stored = localStorage.getItem('nomad:map-scale-unit')
@@ -594,6 +676,7 @@ export default function MapComponent({
           .map((zone) => ({
             id: zone.id,
             name: zone.name,
+            isLine: zone.geometry.type === 'line',
             ...zoneAnchor(zone),
           }))
         : [],
@@ -601,7 +684,12 @@ export default function MapComponent({
   )
 
   const previewGeoJson = useMemo(() => {
-    const geometry = createPreviewGeometry(drawMode, drawPoints, previewPoint)
+    const firstDrawPoint = drawPoints[0]
+    const snappedPreviewPoint =
+      drawMode === 'line' && isShiftKeyDown && firstDrawPoint && previewPoint
+        ? snapPointToAngleIncrement(firstDrawPoint, previewPoint)
+        : previewPoint
+    const geometry = createPreviewGeometry(drawMode, drawPoints, snappedPreviewPoint)
 
     if (!geometry) {
       return {
@@ -627,11 +715,19 @@ export default function MapComponent({
       type: 'FeatureCollection',
       features: [zoneToFeature(previewZone)],
     }
-  }, [drawMode, drawPoints, previewPoint])
+  }, [drawMode, drawPoints, isShiftKeyDown, previewPoint])
 
   const cursorMeasurementLabel = useMemo(
-    () => drawingMeasurementLabel(drawMode, drawPoints, previewPoint, scaleUnit),
-    [drawMode, drawPoints, previewPoint, scaleUnit]
+    () => {
+      const firstDrawPoint = drawPoints[0]
+      const snappedPreviewPoint =
+        drawMode === 'line' && isShiftKeyDown && firstDrawPoint && previewPoint
+          ? snapPointToAngleIncrement(firstDrawPoint, previewPoint)
+          : previewPoint
+
+      return drawingMeasurementLabel(drawMode, drawPoints, snappedPreviewPoint, scaleUnit)
+    },
+    [drawMode, drawPoints, isShiftKeyDown, previewPoint, scaleUnit]
   )
 
   const saveZone = useCallback(
@@ -651,11 +747,13 @@ export default function MapComponent({
   )
 
   const finishDrawFromPoints = useCallback(
-    async (points: DrawPoint[], mode: DrawMode) => {
+    async (points: DrawPoint[], mode: DrawMode, snapLine = false) => {
       const first = points[0]
-      const second = points[1]
+      const rawSecond = points[1]
 
-      if (!first || !second) return false
+      if (!first || !rawSecond) return false
+
+      const second = mode === 'line' && snapLine ? snapPointToAngleIncrement(first, rawSecond) : rawSecond
 
       if (mode === 'circle') {
         await saveZone('circle', {
@@ -689,10 +787,10 @@ export default function MapComponent({
         return true
       }
 
-      if (mode === 'line' || mode === 'curve') {
+      if (mode === 'line') {
         await saveZone('line', {
           type: 'line',
-          lineMode: mode === 'curve' ? 'curve' : 'straight',
+          lineMode: 'straight',
           points: [drawPointToLatLng(first), drawPointToLatLng(second)],
           distanceMeters: distanceMeters(drawPointToLatLng(first), drawPointToLatLng(second)),
         }, 'Distance line')
@@ -741,6 +839,39 @@ export default function MapComponent({
       }
     }
   }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Shift') setIsShiftKeyDown(true)
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key !== 'Shift') return
+
+      setIsShiftKeyDown(false)
+
+      if (drawMode !== 'line' || drawPoints.length !== 1 || !previewPoint) return
+
+      const finishLine = async () => {
+        const finished = await finishDrawFromPoints([...drawPoints, previewPoint], 'line', true)
+
+        if (finished) {
+          setDrawPoints([])
+          setPreviewPoint(null)
+        }
+      }
+
+      finishLine()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [drawMode, drawPoints, finishDrawFromPoints, previewPoint])
 
   useEffect(() => {
     if (!mapCommand) return
@@ -827,6 +958,45 @@ export default function MapComponent({
   }, [])
 
   const handleMapLoad = useCallback(() => {
+    const map = mapRef.current?.getMap()
+
+    if (!map) {
+      flyToLocationParams()
+      return
+    }
+
+    if (map.hasImage('line-arrow')) {
+      setLineArrowImageReady(true)
+      flyToLocationParams()
+      return
+    }
+
+    const size = 32
+    const canvas = document.createElement('canvas')
+
+    canvas.width = size
+    canvas.height = size
+
+    const ctx = canvas.getContext('2d')
+
+    if (ctx) {
+      ctx.fillStyle = '#000'
+
+      ctx.beginPath()
+      ctx.moveTo(26, 16)
+      ctx.lineTo(8, 6)
+      ctx.lineTo(12, 16)
+      ctx.lineTo(8, 26)
+      ctx.closePath()
+      ctx.fill()
+
+      const imageData = ctx.getImageData(0, 0, size, size)
+
+      map.addImage('line-arrow', imageData, { sdf: true })
+
+      setLineArrowImageReady(true)
+    }
+
     flyToLocationParams()
   }, [flyToLocationParams])
 
@@ -837,16 +1007,16 @@ export default function MapComponent({
       if (!confirmDiscardMarkerChanges()) return
 
       if (drawMode !== 'marker' && drawMode !== 'marker_distance') {
-        const nextPoints = [...drawPoints, { longitude: e.lngLat.lng, latitude: e.lngLat.lat }]
+        const nextPoints = [...drawPoints, {longitude: e.lngLat.lng, latitude: e.lngLat.lat}]
 
-        if (drawMode === 'polygon' || drawMode === 'polygon_curve') {
+        if (drawMode === 'polygon') {
           setDrawPoints(nextPoints)
           setPreviewPoint(null)
           return
         }
 
         if (nextPoints.length >= 2) {
-          const finished = await finishDrawFromPoints(nextPoints, drawMode)
+          const finished = await finishDrawFromPoints(nextPoints, drawMode, e.originalEvent.shiftKey)
           if (finished) {
             setDrawPoints([])
             setPreviewPoint(null)
@@ -859,7 +1029,7 @@ export default function MapComponent({
         return
       }
 
-      setPlacingMarker({ lng: e.lngLat.lng, lat: e.lngLat.lat })
+      setPlacingMarker({lng: e.lngLat.lng, lat: e.lngLat.lat})
       setSelectedMarkerId(null)
       setEditingMarkerId(null)
       setHasUnsavedMarkerChanges(false)
@@ -868,9 +1038,29 @@ export default function MapComponent({
     [confirmDiscardMarkerChanges, drawMode, drawPoints, finishDrawFromPoints]
   )
 
+  const finishPolygon = useCallback(async () => {
+    if (drawPoints.length < 3) return
+
+    const polygonPoints = drawPoints.map(drawPointToLatLng)
+
+    await saveZone('polygon', {
+      type: 'polygon',
+      lineMode: 'straight',
+      points: polygonPoints,
+      closed: true,
+    }, 'Polygonal zone')
+    setDrawPoints([])
+    setPreviewPoint(null)
+  }, [drawMode, drawPoints, saveZone])
+
   const handleZoneDoubleClick = useCallback((e: MapLayerMouseEvent) => {
     e.originalEvent.preventDefault()
     e.originalEvent.stopPropagation()
+
+    if (drawMode === 'polygon' && drawPoints.length >= 3) {
+      finishPolygon()
+      return
+    }
 
     const feature = e.features?.[0]
     const zoneId = Number(feature?.properties?.id)
@@ -886,26 +1076,38 @@ export default function MapComponent({
     setPreviewPoint(null)
     setMarkerDistanceStartId(null)
     setHasUnsavedMarkerChanges(false)
-  }, [])
-
-  const finishPolygon = useCallback(async () => {
-    if (drawPoints.length < 3) return
-
-    await saveZone('polygon', {
-      type: 'polygon',
-      lineMode: drawMode === 'polygon_curve' ? 'curve' : 'straight',
-      points: drawPoints.map(drawPointToLatLng),
-      closed: true,
-    }, 'Polygonal zone')
-    setDrawPoints([])
-    setPreviewPoint(null)
-  }, [drawMode, drawPoints, saveZone])
+  }, [drawMode, drawPoints.length, finishPolygon])
 
   const clearDrawing = useCallback(() => {
     setDrawPoints([])
     setPreviewPoint(null)
     setMarkerDistanceStartId(null)
+    setSnapRouteStart(null)
   }, [])
+
+  const handleMapContextMenu = useCallback(
+    (event: MapLayerMouseEvent) => {
+      if (
+        drawPoints.length === 0 &&
+        !previewPoint &&
+        !markerDistanceStartId &&
+        !snapRouteStart
+      ) {
+        return
+      }
+
+      event.preventDefault()
+
+      clearDrawing()
+    },
+    [
+      clearDrawing,
+      drawPoints.length,
+      markerDistanceStartId,
+      previewPoint,
+      snapRouteStart,
+    ]
+  )
 
   useEffect(() => {
     onDrawControlsChange?.({
@@ -918,6 +1120,14 @@ export default function MapComponent({
   const handleMouseMove = useCallback(
     (e: MapLayerMouseEvent) => {
       const target = e.originalEvent.target as HTMLElement | null
+
+      const feature = e.features?.find(
+        (feature) => feature.layer.id === 'map-zones-line'
+      )
+
+      const zoneId = Number(feature?.properties?.id)
+
+      setHoveredLineZoneId(Number.isFinite(zoneId) ? zoneId : null)
 
       if (
         !showCoordinatesEnabled ||
@@ -950,17 +1160,28 @@ export default function MapComponent({
         })
       })
     },
-    [drawMode, drawPoints.length, hideCoordinates, isHoveringUI, isDraggingMap, showCoordinatesEnabled]
+    [
+      drawMode,
+      drawPoints.length,
+      hideCoordinates,
+      isHoveringUI,
+      isDraggingMap,
+      showCoordinatesEnabled,
+    ]
   )
 
   const handleFlyTo = useCallback((longitude: number, latitude: number) => {
     setTargetIndicator(null)
-    mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 12, duration: 1500 })
+    mapRef.current?.flyTo({center: [longitude, latitude], zoom: 12, duration: 1500})
   }, [])
 
   const handleFlyToZone = useCallback((longitude: number, latitude: number) => {
     setTargetIndicator(null)
-    mapRef.current?.flyTo({ center: [longitude, latitude], zoom: Math.max(mapRef.current?.getZoom() ?? 12, 12), duration: 1500 })
+    mapRef.current?.flyTo({
+      center: [longitude, latitude],
+      zoom: Math.max(mapRef.current?.getZoom() ?? 12, 12),
+      duration: 1500
+    })
   }, [])
 
   const handleSelectZone = useCallback((id: number | null) => {
@@ -1026,10 +1247,30 @@ export default function MapComponent({
         return next
       })
 
+      setHiddenArrowZoneIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+
       deleteZone(id)
     },
     [deleteZone, editingZoneId, selectedZoneId]
   )
+
+  const handleToggleZoneArrowVisibility = useCallback((id: number) => {
+    setHiddenArrowZoneIds((prev) => {
+      const next = new Set(prev)
+
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+
+      return next
+    })
+  }, [])
 
   const handleDeleteMarker = useCallback(
     (id: number) => {
@@ -1050,13 +1291,39 @@ export default function MapComponent({
   const selectedZoneAnchor = selectedZone ? zoneAnchor(selectedZone) : null
   const editingZoneAnchor = editingZone ? zoneAnchor(editingZone) : null
 
+  const activeLineHandleZone = zones.find(
+    (zone) =>
+      zone.id === hoveredLineZoneId &&
+      zone.visible &&
+      zone.geometry.type === 'line' &&
+      zone.geometry.points.length >= 2
+  )
+
+  const activeLineHandles =
+    activeLineHandleZone?.geometry.type === 'line'
+      ? [
+        {
+          endpoint: 'start' as const,
+          point: activeLineHandleZone.geometry.points[0],
+        },
+        {
+          endpoint: 'end' as const,
+          point:
+            activeLineHandleZone.geometry.points[
+            activeLineHandleZone.geometry.points.length - 1
+              ],
+        },
+      ]
+      : []
+
   return (
     <MapProvider>
       <div
-        style={{ position: 'relative', width: '100%', height: '100vh' }}
+        style={{position: 'relative', width: '100%', height: '100vh'}}
         onMouseLeave={() => {
           setIsDraggingMap(false)
           hideCoordinates()
+          setHoveredLineZoneId(null)
         }}
         onMouseMoveCapture={(e) => {
           const target = e.target as HTMLElement | null
@@ -1073,7 +1340,7 @@ export default function MapComponent({
         <Map
           ref={mapRef}
           reuseMaps
-          style={{ width: '100%', height: '100vh' }}
+          style={{width: '100%', height: '100vh'}}
           cursor={isDraggingMap ? 'grabbing' : 'crosshair'}
           mapStyle={`${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/maps/styles`}
           mapLib={maplibregl}
@@ -1100,13 +1367,16 @@ export default function MapComponent({
           }}
           onClick={handleMapClick}
           onDblClick={handleZoneDoubleClick}
+          onContextMenu={handleMapContextMenu}
           onMouseMove={handleMouseMove}
           onMouseLeave={hideCoordinates}
           interactiveLayerIds={['map-zones-fill', 'map-zones-line']}
         >
-          <NavigationControl style={{ marginTop: '110px', marginRight: '36px' }} />
-          <FullscreenControl style={{ marginTop: '30px', marginRight: '36px' }} />
-          <ScaleControl position="bottom-left" maxWidth={150} unit={scaleUnit} />
+          <NavigationControl style={{marginTop: '110px', marginRight: '36px'}}/>
+          <FullscreenControl style={{marginTop: '30px', marginRight: '36px'}}/>
+          <ScaleControl position="bottom-left" maxWidth={150} unit={scaleUnit}/>
+
+
 
           <Source id="map-zones" type="geojson" data={zoneGeoJson as any}>
             <Layer
@@ -1128,6 +1398,29 @@ export default function MapComponent({
             />
           </Source>
 
+          {lineArrowImageReady && (
+            <Source id="map-zone-arrows" type="geojson" data={zoneArrowGeoJson as any}>
+              <Layer
+                id="map-zones-line-arrows"
+                type="symbol"
+                layout={{
+                  'symbol-placement': 'line',
+                  'icon-image': 'line-arrow',
+                  'icon-size': 0.7,
+                  'symbol-spacing': 100,
+                  'icon-allow-overlap': true,
+                  'icon-ignore-placement': true,
+                  'icon-rotation-alignment': 'map',
+                  'icon-pitch-alignment': 'map',
+                  'icon-keep-upright': false,
+                }}
+                paint={{
+                  'icon-color': ['get', 'strokeColor'],
+                }}
+              />
+            </Source>
+          )}
+
           <Source id="map-zone-preview" type="geojson" data={previewGeoJson as any}>
             <Layer
               id="map-zone-preview-fill"
@@ -1147,8 +1440,71 @@ export default function MapComponent({
                 'line-dasharray': [2, 1],
               }}
             />
+            {lineArrowImageReady && (
+              <Layer
+                id="map-zone-preview-line-arrows"
+                type="symbol"
+                filter={['==', ['geometry-type'], 'LineString']}
+                layout={{
+                  'symbol-placement': 'line',
+                  'icon-image': 'line-arrow',
+                  'icon-size': 0.7,
+                  'symbol-spacing': 100,
+                  'icon-allow-overlap': true,
+                  'icon-ignore-placement': true,
+                  'icon-rotation-alignment': 'map',
+                  'icon-pitch-alignment': 'map',
+                  'icon-keep-upright': false,
+                }}
+                paint={{
+                  'icon-color': ['get', 'strokeColor'],
+                }}
+              />
+            )}
           </Source>
+          {activeLineHandleZone &&
+            activeLineHandles.map(({ endpoint, point }) => (
+              <Marker
+                key={`line-handle-${activeLineHandleZone.id}-${endpoint}`}
+                longitude={point.longitude}
+                latitude={point.latitude}
+                anchor="center"
+                style={{ zIndex: 35 }}
+                onClick={(event) => {
+                  event.originalEvent.stopPropagation()
 
+                  const snappedPoint = {
+                    longitude: point.longitude,
+                    latitude: point.latitude,
+                  }
+
+                  if (drawMode === 'line' && drawPoints.length === 1) {
+                    finishDrawFromPoints([drawPoints[0], snappedPoint], 'line', isShiftKeyDown)
+
+                    setDrawPoints([])
+                    setPreviewPoint(null)
+                    setHoveredLineZoneId(null)
+
+                    return
+                  }
+
+                  setDrawPoints([snappedPoint])
+                  setPreviewPoint(null)
+                  setSelectedZoneId(null)
+                  setEditingZoneId(null)
+                  setPlacingMarker(null)
+                }}
+              >
+                <div
+                  className="h-4 w-4 cursor-crosshair rounded-full border-2 border-white bg-desert-green shadow transition-transform hover:scale-125"
+                  title={
+                    endpoint === 'start'
+                      ? 'Start new line from start of line'
+                      : 'Start new line from end of line'
+                  }
+                />
+              </Marker>
+            ))}
           {showCoordinates && cursorLngLat && (
             <CoordinateOverlay
               latitude={cursorLngLat.lat}
@@ -1166,8 +1522,8 @@ export default function MapComponent({
                 aria-hidden="true"
               >
                 <div className="relative h-5 w-5">
-                  <div className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 bg-desert-orange" />
-                  <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-desert-orange" />
+                  <div className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 bg-desert-orange"/>
+                  <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-desert-orange"/>
                 </div>
               </div>
             </Marker>
@@ -1184,10 +1540,14 @@ export default function MapComponent({
               key={distanceLabel.id}
               longitude={distanceLabel.longitude}
               latitude={distanceLabel.latitude}
-              anchor="center"
+              anchor={distanceLabel.alignRightOfName ? 'left' : 'center'}
+              offset={distanceLabel.alignRightOfName ? [6, 0] : [0, 0]}
+              style={distanceLabel.alignRightOfName ? { zIndex: 20 } : undefined}
             >
               <div className="pointer-events-none rounded bg-surface-primary/90 px-1.5 py-0.5 text-[11px] font-medium text-text-primary shadow">
-                {distanceLabel.label}
+                {distanceLabel.lines.map((line, index) => (
+                  <div key={`${distanceLabel.id}-line-${index}`}>{line}</div>
+                ))}
               </div>
             </Marker>
           ))}
@@ -1197,10 +1557,12 @@ export default function MapComponent({
               key={`zone-name-${zoneNameLabel.id}`}
               longitude={zoneNameLabel.longitude}
               latitude={zoneNameLabel.latitude}
-              anchor="center"
+              anchor={zoneNameLabel.isLine ? 'right' : 'center'}
+              offset={zoneNameLabel.isLine ? [-6, 0] : [0, 0]}
+              style={zoneNameLabel.isLine ? { zIndex: 20 } : undefined}
             >
-              <div className="pointer-events-none rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white shadow">
-                {zoneNameLabel.name}
+              <div className="pointer-events-none flex items-center gap-1.5 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white shadow">
+                <span>{zoneNameLabel.name}</span>
               </div>
             </Marker>
           ))}
@@ -1213,7 +1575,7 @@ export default function MapComponent({
                 longitude={marker.longitude}
                 latitude={marker.latitude}
                 anchor="bottom"
-                style={{ zIndex: 30 }}
+                style={{zIndex: 30}}
                 onClick={(e) => {
                   e.originalEvent.stopPropagation()
 
@@ -1234,14 +1596,14 @@ export default function MapComponent({
                           type: 'line',
                           lineMode: 'straight',
                           points: [
-                            { longitude: startMarker.longitude, latitude: startMarker.latitude },
-                            { longitude: marker.longitude, latitude: marker.latitude },
+                            {longitude: startMarker.longitude, latitude: startMarker.latitude},
+                            {longitude: marker.longitude, latitude: marker.latitude},
                           ],
                           markerAId: startMarker.id,
                           markerBId: marker.id,
                           distanceMeters: distanceMeters(
-                            { longitude: startMarker.longitude, latitude: startMarker.latitude },
-                            { longitude: marker.longitude, latitude: marker.latitude }
+                            {longitude: startMarker.longitude, latitude: startMarker.latitude},
+                            {longitude: marker.longitude, latitude: marker.latitude}
                           ),
                         }, 'Marker distance line')
                       }
@@ -1276,7 +1638,7 @@ export default function MapComponent({
               latitude={placingMarker.lat}
               onDirtyChange={setHasUnsavedMarkerChanges}
               onMouseEnter={hideCoordinates}
-              onSave={async ({ name, notes, color, customColor, icon   }) => {
+              onSave={async ({name, notes, color, customColor, icon}) => {
                 await addMarker({
                   name,
                   longitude: placingMarker.lng,
@@ -1318,7 +1680,7 @@ export default function MapComponent({
               initialMarker={selectedMarker}
               onDirtyChange={setHasUnsavedMarkerChanges}
               onMouseEnter={hideCoordinates}
-              onSave={async ({ id, name, notes, color, customColor, icon  }) => {
+              onSave={async ({id, name, notes, color, customColor, icon}) => {
                 if (!id) return
 
                 await updateMarker(id, {
@@ -1358,13 +1720,27 @@ export default function MapComponent({
               longitude={editingZoneAnchor.longitude}
               latitude={editingZoneAnchor.latitude}
               onMouseEnter={hideCoordinates}
-              onSave={async ({ id, name, notes, strokeColor, fillColor, fillOpacity, visible }) => {
+              onSave={async ({
+                               id,
+                               name,
+                               notes,
+                               strokeColor,
+                               fillColor,
+                               fillOpacity,
+                               geometry,
+                               navigationTime,
+                               navigationDirection,
+                               visible
+                             }) => {
                 await updateZone(id, {
                   name,
                   notes: notes || null,
                   stroke_color: strokeColor,
                   fill_color: fillColor,
                   fill_opacity: fillOpacity,
+                  geometry,
+                  navigation_time: navigationTime || null,
+                  navigation_direction: navigationDirection || null,
                   visible,
                 })
 
@@ -1383,13 +1759,14 @@ export default function MapComponent({
           onFlyTo={handleFlyTo}
           onSelect={setSelectedMarkerId}
           selectedMarkerId={selectedMarkerId}
-          onToggleVisibility={(id, visible) => updateMarker(id, { visible })}
+          onToggleVisibility={(id, visible) => updateMarker(id, {visible})}
           zoneCount={zones.length}
           zonePanel={
             <ZonePanel
               zones={zones}
               hiddenDistanceZoneIds={hiddenDistanceZoneIds}
               hiddenNameZoneIds={hiddenNameZoneIds}
+              hiddenArrowZoneIds={hiddenArrowZoneIds}
               showZoneDistances={showZoneDistances}
               showZoneNames={showZoneNames}
               onDelete={handleDeleteZone}
@@ -1402,6 +1779,7 @@ export default function MapComponent({
               onToggleShowZoneNames={setShowZoneNames}
               selectedZoneId={selectedZoneId}
               onToggleVisibility={(id, visible) => updateZone(id, { visible })}
+              onToggleArrowVisibility={handleToggleZoneArrowVisibility}
             />
           }
         />

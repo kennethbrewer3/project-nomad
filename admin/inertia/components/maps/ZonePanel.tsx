@@ -13,6 +13,8 @@ import {
   IconRulerMeasure,
   IconSitemap,
   IconTrash,
+  IconArrowRight,
+IconArrowRightDashed,
 } from '@tabler/icons-react'
 
 import type { MapZone } from '~/hooks/useMapZones'
@@ -21,6 +23,7 @@ interface ZonePanelProps {
   zones: MapZone[]
   hiddenDistanceZoneIds: Set<number>
   hiddenNameZoneIds: Set<number>
+  hiddenArrowZoneIds: Set<number>
   showZoneDistances: boolean
   showZoneNames: boolean
   onDelete: (id: number) => void
@@ -32,6 +35,7 @@ interface ZonePanelProps {
   onToggleShowZoneDistances: (visible: boolean) => void
   onToggleShowZoneNames: (visible: boolean) => void
   onToggleVisibility: (id: number, visible: boolean) => void
+  onToggleArrowVisibility: (id: number) => void
   selectedZoneId: number | null
 }
 
@@ -93,6 +97,7 @@ export default function ZonePanel({
   zones,
   hiddenDistanceZoneIds,
   hiddenNameZoneIds,
+  hiddenArrowZoneIds,
   showZoneDistances,
   showZoneNames,
   onDelete,
@@ -104,12 +109,13 @@ export default function ZonePanel({
   onToggleShowZoneDistances,
   onToggleShowZoneNames,
   onToggleVisibility,
+  onToggleArrowVisibility,
   selectedZoneId,
 }: ZonePanelProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
-  const [viewMode, setViewMode] = useState<ViewMode>('tree')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   const sortDirectionLabel = sortDirection === 'asc' ? 'A → Z' : 'Z → A'
@@ -221,6 +227,25 @@ export default function ZonePanel({
         >
           {zone.visible ? <IconEye size={14} /> : <IconEyeOff size={14} />}
         </button>
+
+{zone.geometry.type === 'line' && (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
+      onToggleArrowVisibility(zone.id)
+    }}
+    className={`shrink-0 rounded p-1 transition-colors hover:bg-surface-secondary hover:text-text-primary ${
+hiddenArrowZoneIds.has(zone.id)
+    ? 'text-text-muted opacity-50'
+    : 'text-text-muted'
+}`}
+    title={hiddenArrowZoneIds.has(zone.id) ? 'Show direction arrows' : 'Hide direction arrows'}
+    aria-label={hiddenArrowZoneIds.has(zone.id) ? 'Show direction arrows' : 'Hide direction arrows'}
+  >
+    {hiddenArrowZoneIds.has(zone.id) ? (<IconArrowRightDashed size={14} />) : (<IconArrowRight size={14} />)}
+  </button>
+)}
 
         <button
           type="button"

@@ -3,6 +3,7 @@ import { Popup } from 'react-map-gl/maplibre'
 import { IconBorderStyle2, IconBucketDroplet } from '@tabler/icons-react'
 
 import type { MapZone } from '~/hooks/useMapZones'
+import type { LatLng, MapZoneGeometry } from '../../../types/maps'
 
 const MAX_ZONE_NOTES_LENGTH = 1000
 
@@ -28,6 +29,9 @@ type MapZoneFormPopupProps = {
     strokeColor: string
     fillColor: string | null
     fillOpacity: number
+    geometry: MapZoneGeometry
+    navigationTime: string | null
+    navigationDirection: string | null
     visible: boolean
   }) => Promise<void> | void
   onCancel: () => void
@@ -49,6 +53,9 @@ export default function MapZoneFormPopup({
   const [strokeColor, setStrokeColor] = useState(zone.strokeColor)
   const [fillColor, setFillColor] = useState(zone.fillColor ?? zone.strokeColor)
   const [fillOpacity, setFillOpacity] = useState(zone.fillOpacity)
+  const [geometry, setGeometry] = useState<MapZoneGeometry>(zone.geometry)
+  const [navigationTime, setNavigationTime] = useState(zone.navigationTime ?? '')
+  const [navigationDirection, setNavigationDirection] = useState(zone.navigationDirection ?? '')
   const [isSaving, setIsSaving] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -78,7 +85,10 @@ export default function MapZoneFormPopup({
     notes !== (zone.notes ?? '') ||
     strokeColor !== zone.strokeColor ||
     fillColor !== (zone.fillColor ?? zone.strokeColor) ||
-    fillOpacity !== zone.fillOpacity
+    fillOpacity !== zone.fillOpacity ||
+    navigationTime !== (zone.navigationTime ?? '') ||
+    navigationDirection !== (zone.navigationDirection ?? '') ||
+    JSON.stringify(geometry) !== JSON.stringify(zone.geometry)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -97,11 +107,146 @@ export default function MapZoneFormPopup({
         strokeColor,
         fillColor: zone.zoneType === 'line' ? null : fillColor,
         fillOpacity,
+        geometry,
+        navigationTime: zone.zoneType === 'line' ? navigationTime.trim() || null : null,
+        navigationDirection: zone.zoneType === 'line' ? navigationDirection.trim() || null : null,
         visible: zone.visible,
       })
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const updateLatLng = (point: LatLng, field: keyof LatLng, value: number): LatLng => ({
+    ...point,
+    [field]: value,
+  })
+
+  const updateGeometry = (updater: (current: MapZoneGeometry) => MapZoneGeometry) => {
+    setGeometry((current) => updater(current))
+  }
+
+  const renderNumberInput = (label: string, value: number, onChange: (value: number) => void, step = 0.000001) => (
+    <label className="block text-[11px] text-gray-500">
+      <span>{label}</span>
+      <input
+        type="number"
+        step={step}
+        value={Number.isFinite(value) ? value : 0}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className={inputClass}
+      />
+    </label>
+  )
+
+  const renderPointInputs = (label: string, point: LatLng, onChange: (point: LatLng) => void) => (
+    <div className="grid grid-cols-2 gap-1">
+      {renderNumberInput(`${label} lat`, point.latitude, (value) => onChange(updateLatLng(point, 'latitude', value)))}
+      {renderNumberInput(`${label} lng`, point.longitude, (value) => onChange(updateLatLng(point, 'longitude', value)))}
+    </div>
+  )
+
+  const renderLineNavigationInputs = () => {
+    if (geometry.type !== 'line') return null
+
+    return (
+      <div className="space-y-1">
+        <label className="block text-[11px] text-gray-500">
+          <span>Navigation time</span>
+          <input
+            type="text"
+            placeholder="e.g. 12 min"
+            value={navigationTime}
+            onChange={(e) => setNavigationTime(e.target.value)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className="block text-[11px] text-gray-500">
+          <span>Navigation direction</span>
+          <input
+            type="text"
+            placeholder="e.g. NW or 315°"
+            value={navigationDirection}
+            onChange={(e) => setNavigationDirection(e.target.value)}
+            className={inputClass}
+          />
+        </label>
+      </div>
+    )
+  }
+
+  const renderGeometryFields = () => {
+    if (geometry.type === 'circle') {
+      return (
+        <div className="space-y-1">
+          {renderPointInputs('Center', geometry.center, (center) =>
+            updateGeometry((current) => current.type === 'circle' ? { ...current, center } : current)
+          )}
+          {renderNumberInput('Radius meters', geometry.radiusMeters, (radiusMeters) =>
+            updateGeometry((current) => current.type === 'circle' ? { ...current, radiusMeters } : current), 1
+          )}
+        </div>
+      )
+    }
+
+    if (geometry.type === 'ellipse') {
+      return (
+        <div className="space-y-1">
+          {renderPointInputs('Center', geometry.center, (center) =>
+            updateGeometry((current) => current.type === 'ellipse' ? { ...current, center } : current)
+          )}
+          <div className="grid grid-cols-3 gap-1">
+            {renderNumberInput('Radius X m', geometry.radiusXmeters, (radiusXmeters) =>
+              updateGeometry((current) => current.type === 'ellipse' ? { ...current, radiusXmeters } : current), 1
+            )}
+            {renderNumberInput('Radius Y m', geometry.radiusYmeters, (radiusYmeters) =>
+              updateGeometry((current) => current.type === 'ellipse' ? { ...current, radiusYmeters } : current), 1
+            )}
+            {renderNumberInput('Rotation', geometry.rotationDegrees, (rotationDegrees) =>
+              updateGeometry((current) => current.type === 'ellipse' ? { ...current, rotationDegrees } : current), 1
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    if (geometry.type === 'rectangle') {
+      return (
+        <div className="grid grid-cols-2 gap-1">
+          {(['north', 'south', 'east', 'west'] as const).map((field) =>
+            renderNumberInput(field, geometry.bounds[field], (value) =>
+              updateGeometry((current) =>
+                current.type === 'rectangle' ? { ...current, bounds: { ...current.bounds, [field]: value } } : current
+              )
+            )
+          )}
+        </div>
+      )
+    }
+
+    if (geometry.type === 'line' || geometry.type === 'polygon') {
+      return (
+        <div className="space-y-2">
+          {renderLineNavigationInputs()}
+
+          {geometry.points.map((point, index) => (
+            <div key={`point-${index}`} className="rounded border border-gray-200 p-1">
+              {renderPointInputs(`Point ${index + 1}`, point, (updatedPoint) =>
+                updateGeometry((current) =>
+                  (current.type === 'line' || current.type === 'polygon') && current.type === geometry.type
+                    ? { ...current, points: current.points.map((existingPoint, pointIndex) => pointIndex === index ? updatedPoint : existingPoint) }
+                    : current
+                )
+              )}
+            </div>
+          ))}
+
+        </div>
+      )
+    }
+
+    return null
   }
 
   return (
@@ -244,6 +389,11 @@ export default function MapZoneFormPopup({
               />
             </label>
           )}
+        </div>
+
+        <div className="mt-2 max-h-56 overflow-y-auto rounded border border-gray-200 p-2">
+          <div className="mb-1 text-xs font-semibold text-gray-600">Geometry</div>
+          {renderGeometryFields()}
         </div>
 
         <div className="mt-1.5 flex gap-1.5 justify-end">

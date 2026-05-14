@@ -14,6 +14,8 @@ export interface MapZone {
   fillOpacity: number
   visible: boolean
   notes?: string | null
+  navigationTime?: string | null
+  navigationDirection?: string | null
   createdAt: string
   updatedAt?: string
 }
@@ -29,6 +31,8 @@ const mapZoneResponse = (zone: MapZoneResponse): MapZone => ({
   fillOpacity: zone.fill_opacity,
   visible: zone.visible,
   notes: zone.notes ?? null,
+  navigationTime: zone.navigation_time ?? null,
+  navigationDirection: zone.navigation_direction ?? null,
   createdAt: zone.created_at,
   updatedAt: zone.updated_at,
 })

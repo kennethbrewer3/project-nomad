@@ -258,6 +258,8 @@ export default class MapsController {
           fill_opacity: vine.number().min(0).max(1).optional(),
           visible: vine.boolean().optional(),
           notes: vine.string().trim().nullable().optional(),
+          navigation_time: vine.string().trim().maxLength(255).nullable().optional(),
+          navigation_direction: vine.string().trim().maxLength(255).nullable().optional(),
         })
       )
     )
@@ -272,6 +274,8 @@ export default class MapsController {
       fill_opacity: payload.fill_opacity ?? 0.2,
       visible: payload.visible ?? true,
       notes: payload.notes ?? null,
+      navigation_time: payload.navigation_time ?? null,
+      navigation_direction: payload.navigation_direction ?? null,
     })
   }
 
@@ -295,6 +299,8 @@ export default class MapsController {
           fill_opacity: vine.number().min(0).max(1).optional(),
           visible: vine.boolean().optional(),
           notes: vine.string().trim().nullable().optional(),
+          navigation_time: vine.string().trim().maxLength(255).nullable().optional(),
+          navigation_direction: vine.string().trim().maxLength(255).nullable().optional(),
         })
       )
     )
@@ -308,6 +314,8 @@ export default class MapsController {
     if (payload.fill_opacity !== undefined) zone.fill_opacity = payload.fill_opacity
     if (payload.visible !== undefined) zone.visible = payload.visible
     if (payload.notes !== undefined) zone.notes = payload.notes
+    if (payload.navigation_time !== undefined) zone.navigation_time = payload.navigation_time
+    if (payload.navigation_direction !== undefined) zone.navigation_direction = payload.navigation_direction
 
     await zone.save()
     return zone

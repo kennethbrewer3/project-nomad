@@ -118,13 +118,13 @@ export type MapZoneGeometry =
     }
   | {
       type: 'polygon'
-      lineMode: 'straight' | 'curve'
+      lineMode: 'straight'
       points: LatLng[]
       closed: true
     }
   | {
       type: 'line'
-      lineMode: 'straight' | 'curve'
+      lineMode: 'straight'
       points: LatLng[]
       markerAId?: number | null
       markerBId?: number | null
@@ -141,6 +141,8 @@ export type CreateMapZonePayload = {
   fill_opacity?: number
   visible?: boolean
   notes?: string | null
+  navigation_time?: string | null
+  navigation_direction?: string | null
 }
 
 export type UpdateMapZonePayload = Partial<CreateMapZonePayload>
@@ -156,6 +158,8 @@ export type MapZoneResponse = {
   fill_opacity: number
   visible: boolean
   notes?: string | null
+  navigation_time?: string | null
+  navigation_direction?: string | null
   created_at: string
   updated_at?: string
 }
