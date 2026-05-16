@@ -11,7 +11,7 @@ http://<your-server>/api
 For local development, this is commonly:
 
 ```text
-http://localhost:3333/api
+http://localhost:8080/api
 ```
 
 For a deployed instance, replace `<your-server>` with your host name or IP address.
@@ -91,7 +91,7 @@ Checks whether the API server is responding.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/health | jq
+curl -s http://localhost:8080/api/health | jq
 ```
 
 ### Response `200`
@@ -113,7 +113,7 @@ Returns host system information such as CPU, memory, disk, platform, and runtime
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/info | jq
+curl -s http://localhost:8080/api/system/info | jq
 ```
 
 ### Example response
@@ -149,7 +149,7 @@ Checks whether the server can reach the internet.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/internet-status | jq
+curl -s http://localhost:8080/api/system/internet-status | jq
 ```
 
 ### Example response
@@ -165,7 +165,7 @@ Returns diagnostic information useful for troubleshooting.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/debug-info | jq -r .debugInfo
+curl -s http://localhost:8080/api/system/debug-info | jq -r .debugInfo
 ```
 
 ### Example response
@@ -189,7 +189,7 @@ Checks for the latest available N.O.M.A.D. release.
 ### curl
 
 ```bash
-curl -s "http://localhost:3333/api/system/latest-version?force=true" | jq
+curl -s "http://localhost:8080/api/system/latest-version?force=true" | jq
 ```
 
 ### Example response
@@ -210,7 +210,7 @@ Starts a system update.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/update | jq
+curl -s -X POST http://localhost:8080/api/system/update | jq
 ```
 
 ### Example response `202`
@@ -229,7 +229,7 @@ Returns current update status.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/update/status | jq
+curl -s http://localhost:8080/api/system/update/status | jq
 ```
 
 ### Example response
@@ -249,7 +249,7 @@ Returns update logs.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/update/logs | jq -r .logs
+curl -s http://localhost:8080/api/system/update/logs | jq -r .logs
 ```
 
 ### Example response
@@ -273,7 +273,7 @@ Gets a setting value by key.
 ### curl
 
 ```bash
-curl -s "http://localhost:3333/api/system/settings?key=theme" | jq
+curl -s "http://localhost:8080/api/system/settings?key=theme" | jq
 ```
 
 ### Example response
@@ -301,7 +301,7 @@ Updates a setting.
 ### curl
 
 ```bash
-curl -s -X PATCH http://localhost:3333/api/system/settings \
+curl -s -X PATCH http://localhost:8080/api/system/settings \
   -H 'Content-Type: application/json' \
   -d '{"key":"theme","value":"dark"}' | jq
 ```
@@ -330,7 +330,7 @@ Subscribes an email address to release notes.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/subscribe-release-notes \
+curl -s -X POST http://localhost:8080/api/system/subscribe-release-notes \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com"}' | jq
 ```
@@ -355,7 +355,7 @@ Lists configured services and their current status.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/services | jq
+curl -s http://localhost:8080/api/system/services | jq
 ```
 
 ### Example response
@@ -396,7 +396,7 @@ Installs a service.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/services/install \
+curl -s -X POST http://localhost:8080/api/system/services/install \
   -H 'Content-Type: application/json' \
   -d '{"service_name":"kiwix"}' | jq
 ```
@@ -425,7 +425,7 @@ Forces a reinstall of an installed service.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/services/force-reinstall \
+curl -s -X POST http://localhost:8080/api/system/services/force-reinstall \
   -H 'Content-Type: application/json' \
   -d '{"service_name":"kiwix"}' | jq
 ```
@@ -461,7 +461,7 @@ start | stop | restart
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/services/affect \
+curl -s -X POST http://localhost:8080/api/system/services/affect \
   -H 'Content-Type: application/json' \
   -d '{"service_name":"kiwix","action":"restart"}' | jq
 ```
@@ -482,7 +482,7 @@ Checks available updates for installed services.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/services/check-updates | jq
+curl -s -X POST http://localhost:8080/api/system/services/check-updates | jq
 ```
 
 ### Example response
@@ -510,7 +510,7 @@ Updates a service to a specific version.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/system/services/update \
+curl -s -X POST http://localhost:8080/api/system/services/update \
   -H 'Content-Type: application/json' \
   -d '{"service_name":"kiwix","target_version":"3.5.0-2"}' | jq
 ```
@@ -531,7 +531,7 @@ Lists available versions for a service.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/system/services/kiwix/available-versions | jq
+curl -s http://localhost:8080/api/system/services/kiwix/available-versions | jq
 ```
 
 ### Example response
@@ -573,7 +573,7 @@ Lists available Ollama models. Supports searching, pagination, and recommended-o
 ### curl
 
 ```bash
-curl -s "http://localhost:3333/api/ollama/models?query=llama&limit=5" | jq
+curl -s "http://localhost:8080/api/ollama/models?query=llama&limit=5" | jq
 ```
 
 ### Example response
@@ -600,7 +600,7 @@ Lists models installed on the local Ollama instance.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/ollama/installed-models | jq
+curl -s http://localhost:8080/api/ollama/installed-models | jq
 ```
 
 ### Example response
@@ -630,7 +630,7 @@ Downloads a model.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/ollama/models \
+curl -s -X POST http://localhost:8080/api/ollama/models \
   -H 'Content-Type: application/json' \
   -d '{"model":"llama3.2:latest"}' | jq
 ```
@@ -659,7 +659,7 @@ Deletes an installed model.
 ### curl
 
 ```bash
-curl -s -X DELETE http://localhost:3333/api/ollama/models \
+curl -s -X DELETE http://localhost:8080/api/ollama/models \
   -H 'Content-Type: application/json' \
   -d '{"model":"llama3.2:latest"}' | jq
 ```
@@ -696,7 +696,7 @@ Sends a chat request. Supports regular JSON responses and streaming responses.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/ollama/chat \
+curl -s -X POST http://localhost:8080/api/ollama/chat \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "llama3.2:latest",
@@ -721,7 +721,7 @@ curl -s -X POST http://localhost:3333/api/ollama/chat \
 ### Streaming curl
 
 ```bash
-curl -N -X POST http://localhost:3333/api/ollama/chat \
+curl -N -X POST http://localhost:8080/api/ollama/chat \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "llama3.2:latest",
@@ -745,7 +745,7 @@ Returns suggested prompts.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/chat/suggestions | jq
+curl -s http://localhost:8080/api/chat/suggestions | jq
 ```
 
 ### Example response
@@ -777,7 +777,7 @@ Set `remoteUrl` to `null` to clear remote configuration.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/ollama/configure-remote \
+curl -s -X POST http://localhost:8080/api/ollama/configure-remote \
   -H 'Content-Type: application/json' \
   -d '{"remoteUrl":"http://10.0.0.50:11434"}' | jq
 ```
@@ -798,7 +798,7 @@ Checks remote Ollama configuration and connectivity.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/ollama/remote-status | jq
+curl -s http://localhost:8080/api/ollama/remote-status | jq
 ```
 
 ### Example response
@@ -821,7 +821,7 @@ Lists saved chat sessions.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/chat/sessions | jq
+curl -s http://localhost:8080/api/chat/sessions | jq
 ```
 
 ### Example response
@@ -854,7 +854,7 @@ Creates a chat session.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/chat/sessions \
+curl -s -X POST http://localhost:8080/api/chat/sessions \
   -H 'Content-Type: application/json' \
   -d '{"title":"Offline planning","model":"llama3.2:latest"}' | jq
 ```
@@ -877,7 +877,7 @@ Gets one session and its messages.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/chat/sessions/chat_01HXABC123 | jq
+curl -s http://localhost:8080/api/chat/sessions/chat_01HXABC123 | jq
 ```
 
 ### Example response
@@ -915,7 +915,7 @@ Updates session metadata.
 ### curl
 
 ```bash
-curl -s -X PUT http://localhost:3333/api/chat/sessions/chat_01HXABC123 \
+curl -s -X PUT http://localhost:8080/api/chat/sessions/chat_01HXABC123 \
   -H 'Content-Type: application/json' \
   -d '{"title":"New title"}' | jq
 ```
@@ -947,7 +947,7 @@ Adds a message to a chat session.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/chat/sessions/chat_01HXABC123/messages \
+curl -s -X POST http://localhost:8080/api/chat/sessions/chat_01HXABC123/messages \
   -H 'Content-Type: application/json' \
   -d '{"role":"user","content":"What maps are installed?"}' | jq
 ```
@@ -970,7 +970,7 @@ Deletes one chat session.
 ### curl
 
 ```bash
-curl -i -X DELETE http://localhost:3333/api/chat/sessions/chat_01HXABC123
+curl -i -X DELETE http://localhost:8080/api/chat/sessions/chat_01HXABC123
 ```
 
 ### Example response
@@ -986,7 +986,7 @@ Deletes all chat sessions.
 ### curl
 
 ```bash
-curl -s -X DELETE http://localhost:3333/api/chat/sessions/all | jq
+curl -s -X DELETE http://localhost:8080/api/chat/sessions/all | jq
 ```
 
 ### Example response
@@ -1015,7 +1015,7 @@ multipart/form-data
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/rag/upload \
+curl -s -X POST http://localhost:8080/api/rag/upload \
   -F "file=@/path/to/document.pdf" | jq
 ```
 
@@ -1035,7 +1035,7 @@ Lists stored RAG files.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/rag/files | jq
+curl -s http://localhost:8080/api/rag/files | jq
 ```
 
 ### Example response
@@ -1064,7 +1064,7 @@ Deletes a stored RAG file.
 ### curl
 
 ```bash
-curl -s -X DELETE http://localhost:3333/api/rag/files \
+curl -s -X DELETE http://localhost:8080/api/rag/files \
   -H 'Content-Type: application/json' \
   -d '{"source":"document.pdf"}' | jq
 ```
@@ -1084,7 +1084,7 @@ Lists active embedding jobs.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/rag/active-jobs | jq
+curl -s http://localhost:8080/api/rag/active-jobs | jq
 ```
 
 ### Example response
@@ -1108,7 +1108,7 @@ Lists failed embedding jobs.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/rag/failed-jobs | jq
+curl -s http://localhost:8080/api/rag/failed-jobs | jq
 ```
 
 ### Example response
@@ -1131,7 +1131,7 @@ Cleans up failed embedding jobs and associated files.
 ### curl
 
 ```bash
-curl -s -X DELETE http://localhost:3333/api/rag/failed-jobs | jq
+curl -s -X DELETE http://localhost:8080/api/rag/failed-jobs | jq
 ```
 
 ### Example response
@@ -1151,7 +1151,7 @@ Checks RAG subsystem health.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/rag/health | jq
+curl -s http://localhost:8080/api/rag/health | jq
 ```
 
 ### Example response
@@ -1170,7 +1170,7 @@ Syncs RAG database records with files present in storage.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/rag/sync | jq
+curl -s -X POST http://localhost:8080/api/rag/sync | jq
 ```
 
 ### Example response
@@ -1195,7 +1195,7 @@ Lists local ZIM files.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/zim/list | jq
+curl -s http://localhost:8080/api/zim/list | jq
 ```
 
 ### Example response
@@ -1228,7 +1228,7 @@ Lists remote ZIM files. Supports pagination and search.
 ### curl
 
 ```bash
-curl -s "http://localhost:3333/api/zim/list-remote?start=0&count=12&query=wikipedia" | jq
+curl -s "http://localhost:8080/api/zim/list-remote?start=0&count=12&query=wikipedia" | jq
 ```
 
 ### Example response
@@ -1271,7 +1271,7 @@ Downloads a remote ZIM file.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/zim/download-remote \
+curl -s -X POST http://localhost:8080/api/zim/download-remote \
   -H 'Content-Type: application/json' \
   -d '{
     "url":"https://download.kiwix.org/zim/wikipedia/wikipedia_en_simple_all_maxi_2026-01.zim",
@@ -1305,7 +1305,7 @@ Downloads all content for a category/tier combination.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/zim/download-category-tier \
+curl -s -X POST http://localhost:8080/api/zim/download-category-tier \
   -H 'Content-Type: application/json' \
   -d '{"categorySlug":"wikipedia","tierSlug":"essential"}' | jq
 ```
@@ -1330,7 +1330,7 @@ Gets the current Wikipedia selector state.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/zim/wikipedia | jq
+curl -s http://localhost:8080/api/zim/wikipedia | jq
 ```
 
 ### Example response
@@ -1365,7 +1365,7 @@ Selects a Wikipedia edition/tier.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/zim/wikipedia/select \
+curl -s -X POST http://localhost:8080/api/zim/wikipedia/select \
   -H 'Content-Type: application/json' \
   -d '{"optionId":"wikipedia_en_simple_all_maxi"}' | jq
 ```
@@ -1387,7 +1387,7 @@ Deletes a local ZIM file.
 ### curl
 
 ```bash
-curl -s -X DELETE "http://localhost:3333/api/zim/wikipedia_en_simple_all_maxi_2026-01.zim" | jq
+curl -s -X DELETE "http://localhost:8080/api/zim/wikipedia_en_simple_all_maxi_2026-01.zim" | jq
 ```
 
 ### Example response
@@ -1405,7 +1405,7 @@ curl -s -X DELETE "http://localhost:3333/api/zim/wikipedia_en_simple_all_maxi_20
 Lists custom ZIM libraries.
 
 ```bash
-curl -s http://localhost:3333/api/zim/custom-libraries | jq
+curl -s http://localhost:8080/api/zim/custom-libraries | jq
 ```
 
 Example response:
@@ -1426,7 +1426,7 @@ Example response:
 Adds a custom library.
 
 ```bash
-curl -s -X POST http://localhost:3333/api/zim/custom-libraries \
+curl -s -X POST http://localhost:8080/api/zim/custom-libraries \
   -H 'Content-Type: application/json' \
   -d '{"name":"My Mirror","base_url":"https://example.com/zim/"}' | jq
 ```
@@ -1449,7 +1449,7 @@ Example response:
 Removes a custom library.
 
 ```bash
-curl -s -X DELETE http://localhost:3333/api/zim/custom-libraries/2 | jq
+curl -s -X DELETE http://localhost:8080/api/zim/custom-libraries/2 | jq
 ```
 
 Example response:
@@ -1465,7 +1465,7 @@ Example response:
 Browses a remote ZIM library URL.
 
 ```bash
-curl -s "http://localhost:3333/api/zim/browse-library?url=https%3A%2F%2Fdownload.kiwix.org%2Fzim%2F" | jq
+curl -s "http://localhost:8080/api/zim/browse-library?url=https%3A%2F%2Fdownload.kiwix.org%2Fzim%2F" | jq
 ```
 
 Example response:
@@ -1499,7 +1499,7 @@ Lists available local map region files.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/regions | jq
+curl -s http://localhost:8080/api/maps/regions | jq
 ```
 
 ### Example response
@@ -1522,7 +1522,7 @@ Returns the MapLibre style JSON used by the frontend.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/styles | jq
+curl -s http://localhost:8080/api/maps/styles | jq
 ```
 
 ### Example response
@@ -1555,7 +1555,7 @@ Returns information about the global map package.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/global-map-info | jq
+curl -s http://localhost:8080/api/maps/global-map-info | jq
 ```
 
 ### Example response
@@ -1576,7 +1576,7 @@ Starts download of the global map package.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/download-global-map | jq
+curl -s -X POST http://localhost:8080/api/maps/download-global-map | jq
 ```
 
 ### Example response
@@ -1596,7 +1596,7 @@ Lists curated map collections.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/curated-collections | jq
+curl -s http://localhost:8080/api/maps/curated-collections | jq
 ```
 
 ### Example response
@@ -1625,7 +1625,7 @@ Refreshes map collection metadata from the configured source.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/fetch-latest-collections | jq
+curl -s -X POST http://localhost:8080/api/maps/fetch-latest-collections | jq
 ```
 
 ### Example response
@@ -1643,7 +1643,7 @@ Downloads base map assets required by the map UI.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/download-base-assets | jq
+curl -s -X POST http://localhost:8080/api/maps/download-base-assets | jq
 ```
 
 ### Example response
@@ -1669,7 +1669,7 @@ Checks a remote map file before downloading.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/download-remote-preflight \
+curl -s -X POST http://localhost:8080/api/maps/download-remote-preflight \
   -H 'Content-Type: application/json' \
   -d '{"url":"https://example.com/maps/virginia.pmtiles"}' | jq
 ```
@@ -1698,7 +1698,7 @@ Downloads a remote map file.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/download-remote \
+curl -s -X POST http://localhost:8080/api/maps/download-remote \
   -H 'Content-Type: application/json' \
   -d '{"url":"https://example.com/maps/virginia.pmtiles"}' | jq
 ```
@@ -1728,7 +1728,7 @@ Downloads a full curated collection.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/download-collection \
+curl -s -X POST http://localhost:8080/api/maps/download-collection \
   -H 'Content-Type: application/json' \
   -d '{"slug":"north-america"}' | jq
 ```
@@ -1752,7 +1752,7 @@ Lists countries available for map extraction.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/countries | jq
+curl -s http://localhost:8080/api/maps/countries | jq
 ```
 
 ### Example response
@@ -1776,7 +1776,7 @@ Lists predefined country groups.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/country-groups | jq
+curl -s http://localhost:8080/api/maps/country-groups | jq
 ```
 
 ### Example response
@@ -1809,7 +1809,7 @@ Preflights a map extraction request.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/extract-preflight \
+curl -s -X POST http://localhost:8080/api/maps/extract-preflight \
   -H 'Content-Type: application/json' \
   -d '{"countries":["US","CA"],"maxzoom":10}' | jq
 ```
@@ -1843,7 +1843,7 @@ Starts a map extraction job.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/extract \
+curl -s -X POST http://localhost:8080/api/maps/extract \
   -H 'Content-Type: application/json' \
   -d '{"countries":["US","CA"],"maxzoom":10,"label":"us-canada","estimatedBytes":2345678901}' | jq
 ```
@@ -1865,7 +1865,7 @@ Deletes a local map file.
 ### curl
 
 ```bash
-curl -s -X DELETE "http://localhost:3333/api/maps/virginia.pmtiles" | jq
+curl -s -X DELETE "http://localhost:8080/api/maps/virginia.pmtiles" | jq
 ```
 
 ### Example response
@@ -1911,7 +1911,7 @@ Lists all map markers.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/markers | jq
+curl -s http://localhost:8080/api/maps/markers | jq
 ```
 
 ### Example response
@@ -1964,7 +1964,7 @@ Creates a map marker.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/markers \
+curl -s -X POST http://localhost:8080/api/maps/markers \
   -H 'Content-Type: application/json' \
   -d '{
     "name":"Camp Alpha",
@@ -2018,7 +2018,7 @@ Updates a map marker. Fields that are not changing may be omitted.
 ### curl
 
 ```bash
-curl -s -X PATCH http://localhost:3333/api/maps/markers/1 \
+curl -s -X PATCH http://localhost:8080/api/maps/markers/1 \
   -H 'Content-Type: application/json' \
   -d '{"name":"Camp Alpha Updated","visible":false,"notes":"Temporarily hidden"}' | jq
 ```
@@ -2052,7 +2052,7 @@ Deletes a marker.
 ### curl
 
 ```bash
-curl -i -X DELETE http://localhost:3333/api/maps/markers/1
+curl -i -X DELETE http://localhost:8080/api/maps/markers/1
 ```
 
 ### Example response
@@ -2174,7 +2174,7 @@ Lists all map zones, including line zones.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/maps/zones | jq
+curl -s http://localhost:8080/api/maps/zones | jq
 ```
 
 ### Example response
@@ -2241,7 +2241,7 @@ Creates a map zone. Use `zone_type: "line"` with line geometry to create a line/
 ### curl: create line
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/zones \
+curl -s -X POST http://localhost:8080/api/maps/zones \
   -H 'Content-Type: application/json' \
   -d '{
     "name":"Route to Baltimore",
@@ -2298,7 +2298,7 @@ curl -s -X POST http://localhost:3333/api/maps/zones \
 ### curl: create polygon
 
 ```bash
-curl -s -X POST http://localhost:3333/api/maps/zones \
+curl -s -X POST http://localhost:8080/api/maps/zones \
   -H 'Content-Type: application/json' \
   -d '{
     "name":"Camp Boundary",
@@ -2341,7 +2341,7 @@ Updates a map zone. Fields that are not changing may be omitted.
 ### curl
 
 ```bash
-curl -s -X PATCH http://localhost:3333/api/maps/zones/10 \
+curl -s -X PATCH http://localhost:8080/api/maps/zones/10 \
   -H 'Content-Type: application/json' \
   -d '{
     "name":"Route to Baltimore Updated",
@@ -2383,7 +2383,7 @@ curl -s -X PATCH http://localhost:3333/api/maps/zones/10 \
 ### curl: update geometry
 
 ```bash
-curl -s -X PATCH http://localhost:3333/api/maps/zones/10 \
+curl -s -X PATCH http://localhost:8080/api/maps/zones/10 \
   -H 'Content-Type: application/json' \
   -d '{
     "geometry":{
@@ -2405,7 +2405,7 @@ Deletes a map zone or line.
 ### curl
 
 ```bash
-curl -i -X DELETE http://localhost:3333/api/maps/zones/10
+curl -i -X DELETE http://localhost:8080/api/maps/zones/10
 ```
 
 ### Example response
@@ -2425,7 +2425,7 @@ Lists all background download jobs.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/downloads/jobs | jq
+curl -s http://localhost:8080/api/downloads/jobs | jq
 ```
 
 ### Example response
@@ -2453,7 +2453,7 @@ Common `filetype` values include `map`, `zim`, and `model`.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/downloads/jobs/zim | jq
+curl -s http://localhost:8080/api/downloads/jobs/zim | jq
 ```
 
 ### Example response
@@ -2477,7 +2477,7 @@ Removes a download job.
 ### curl
 
 ```bash
-curl -i -X DELETE http://localhost:3333/api/downloads/jobs/map_1717422000000
+curl -i -X DELETE http://localhost:8080/api/downloads/jobs/map_1717422000000
 ```
 
 ### Example response
@@ -2493,7 +2493,7 @@ Cancels a download job.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/downloads/jobs/map_1717422000000/cancel | jq
+curl -s -X POST http://localhost:8080/api/downloads/jobs/map_1717422000000/cancel | jq
 ```
 
 ### Example response
@@ -2536,7 +2536,7 @@ full | system | ai
 ### curl
 
 ```bash
-curl -s -X POST "http://localhost:3333/api/benchmark/run?sync=false" \
+curl -s -X POST "http://localhost:8080/api/benchmark/run?sync=false" \
   -H 'Content-Type: application/json' \
   -d '{"benchmark_type":"full"}' | jq
 ```
@@ -2558,7 +2558,7 @@ Lists benchmark results.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/benchmark/results | jq
+curl -s http://localhost:8080/api/benchmark/results | jq
 ```
 
 ### Example response
@@ -2584,7 +2584,7 @@ Gets the latest benchmark result.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/benchmark/results/latest | jq
+curl -s http://localhost:8080/api/benchmark/results/latest | jq
 ```
 
 ### Example response
@@ -2616,7 +2616,7 @@ Submits a benchmark to the central repository.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/benchmark/submit \
+curl -s -X POST http://localhost:8080/api/benchmark/submit \
   -H 'Content-Type: application/json' \
   -d '{"benchmark_id":"bench_1717422000000","anonymous":true}' | jq
 ```
@@ -2646,7 +2646,7 @@ Updates builder tag metadata for a benchmark result.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/benchmark/builder-tag \
+curl -s -X POST http://localhost:8080/api/benchmark/builder-tag \
   -H 'Content-Type: application/json' \
   -d '{"benchmark_id":"bench_1717422000000","builder_tag":"raspberry-pi-5"}' | jq
 ```
@@ -2671,7 +2671,7 @@ Lists curated categories for the setup wizard.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/easy-setup/curated-categories | jq
+curl -s http://localhost:8080/api/easy-setup/curated-categories | jq
 ```
 
 ### Example response
@@ -2694,7 +2694,7 @@ Refreshes manifest caches.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/manifests/refresh | jq
+curl -s -X POST http://localhost:8080/api/manifests/refresh | jq
 ```
 
 ### Example response
@@ -2717,7 +2717,7 @@ Checks available content updates.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/content-updates/check | jq
+curl -s -X POST http://localhost:8080/api/content-updates/check | jq
 ```
 
 ### Example response
@@ -2752,7 +2752,7 @@ Applies one content update.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/content-updates/apply \
+curl -s -X POST http://localhost:8080/api/content-updates/apply \
   -H 'Content-Type: application/json' \
   -d '{"resource_id":"wikipedia_en_simple_all_maxi","latest_version":"2026-03","url":"https://download.kiwix.org/zim/wikipedia/example.zim"}' | jq
 ```
@@ -2787,7 +2787,7 @@ Applies multiple content updates.
 ### curl
 
 ```bash
-curl -s -X POST http://localhost:3333/api/content-updates/apply-all \
+curl -s -X POST http://localhost:8080/api/content-updates/apply-all \
   -H 'Content-Type: application/json' \
   -d '{"updates":[{"resource_id":"wikipedia_en_simple_all_maxi","latest_version":"2026-03","url":"https://download.kiwix.org/zim/wikipedia/example.zim"}]}' | jq
 ```
@@ -2817,7 +2817,7 @@ Lists available documentation pages.
 ### curl
 
 ```bash
-curl -s http://localhost:3333/api/docs/list | jq
+curl -s http://localhost:8080/api/docs/list | jq
 ```
 
 ### Example response
@@ -2843,7 +2843,7 @@ curl -s http://localhost:3333/api/docs/list | jq
 
 ```bash
 # Create
-LINE_ID=$(curl -s -X POST http://localhost:3333/api/maps/zones \
+LINE_ID=$(curl -s -X POST http://localhost:8080/api/maps/zones \
   -H 'Content-Type: application/json' \
   -d '{
     "name":"Route Demo",
@@ -2867,22 +2867,22 @@ LINE_ID=$(curl -s -X POST http://localhost:3333/api/maps/zones \
   }' | jq -r .id)
 
 # List
-curl -s http://localhost:3333/api/maps/zones | jq
+curl -s http://localhost:8080/api/maps/zones | jq
 
 # Update
-curl -s -X PATCH "http://localhost:3333/api/maps/zones/${LINE_ID}" \
+curl -s -X PATCH "http://localhost:8080/api/maps/zones/${LINE_ID}" \
   -H 'Content-Type: application/json' \
   -d '{"navigation_time":"50 min","visible":true}' | jq
 
 # Delete
-curl -i -X DELETE "http://localhost:3333/api/maps/zones/${LINE_ID}"
+curl -i -X DELETE "http://localhost:8080/api/maps/zones/${LINE_ID}"
 ```
 
 ## Create, update, list, and delete a marker
 
 ```bash
 # Create
-MARKER_ID=$(curl -s -X POST http://localhost:3333/api/maps/markers \
+MARKER_ID=$(curl -s -X POST http://localhost:8080/api/maps/markers \
   -H 'Content-Type: application/json' \
   -d '{
     "name":"Camp Alpha",
@@ -2895,13 +2895,13 @@ MARKER_ID=$(curl -s -X POST http://localhost:3333/api/maps/markers \
   }' | jq -r .id)
 
 # List
-curl -s http://localhost:3333/api/maps/markers | jq
+curl -s http://localhost:8080/api/maps/markers | jq
 
 # Update
-curl -s -X PATCH "http://localhost:3333/api/maps/markers/${MARKER_ID}" \
+curl -s -X PATCH "http://localhost:8080/api/maps/markers/${MARKER_ID}" \
   -H 'Content-Type: application/json' \
   -d '{"name":"Camp Alpha Updated","visible":false}' | jq
 
 # Delete
-curl -i -X DELETE "http://localhost:3333/api/maps/markers/${MARKER_ID}"
+curl -i -X DELETE "http://localhost:8080/api/maps/markers/${MARKER_ID}"
 ```
