@@ -1,24 +1,39 @@
-import axios, { AxiosError, AxiosInstance } from 'axios'
-import { ListRemoteZimFilesResponse, ListZimFilesResponse } from '../../types/zim'
-import { ServiceSlim } from '../../types/services'
-import { FileEntry } from '../../types/files'
-import { CheckLatestVersionResult, SystemInformationResponse, SystemUpdateStatus } from '../../types/system'
-import { DownloadJobWithProgress, WikipediaState } from '../../types/downloads'
-import type { Country, CountryCode, CountryGroup, MapExtractPreflight } from '../../types/maps'
-import { EmbedJobWithProgress } from '../../types/rag'
-import type { CategoryWithStatus, CollectionWithStatus, ContentUpdateCheckResult, ResourceUpdateInfo } from '../../types/collections'
-import { catchInternal } from './util'
-import { NomadChatResponse, NomadInstalledModel, NomadOllamaModel, OllamaChatRequest } from '../../types/ollama'
-import BenchmarkResult from '#models/benchmark_result'
-import { BenchmarkType, RunBenchmarkResponse, SubmitBenchmarkResponse, UpdateBuilderTagResponse } from '../../types/benchmark'
+import axios, {AxiosError} from 'axios'
+import type {AxiosInstance} from 'axios'
+import type {ListRemoteZimFilesResponse, ListZimFilesResponse} from '../../types/zim'
+import type {ServiceSlim} from '../../types/services'
+import type {FileEntry} from '../../types/files'
+import type {CheckLatestVersionResult, SystemInformationResponse, SystemUpdateStatus} from '../../types/system'
+import type {DownloadJobWithProgress, WikipediaState} from '../../types/downloads'
 import type {
+  Country,
+  CountryCode,
+  CountryGroup,
   CreateMapMarkerPayload,
   CreateMapZonePayload,
+  MapExtractPreflight,
   MapMarkerResponse,
   MapZoneResponse,
   UpdateMapMarkerPayload,
   UpdateMapZonePayload,
 } from '../../types/maps'
+import type {EmbedJobWithProgress} from '../../types/rag'
+import type {
+  CategoryWithStatus,
+  CollectionWithStatus,
+  ContentUpdateCheckResult,
+  ResourceUpdateInfo
+} from '../../types/collections'
+import {catchInternal} from './util'
+import type {NomadChatResponse, NomadInstalledModel, NomadOllamaModel, OllamaChatRequest} from '../../types/ollama'
+import type {
+  BenchmarkType,
+  RunBenchmarkResponse,
+  SubmitBenchmarkResponse,
+  UpdateBuilderTagResponse
+} from '../../types/benchmark'
+
+type BenchmarkResult = Record<string, unknown>
 
 class API {
   private client: AxiosInstance
@@ -36,12 +51,12 @@ class API {
     try {
       const response = await this.client.post<{ success: boolean; message: string }>(
         '/system/services/affect',
-        { service_name, action }
+        {service_name, action}
       )
       return response.data
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data?.message) {
-        return { success: false, message: error.response.data.message }
+        return {success: false, message: error.response.data.message}
       }
       console.error('Error affecting service:', error)
       return undefined
@@ -51,7 +66,7 @@ class API {
   async checkLatestVersion(force: boolean = false) {
     return catchInternal(async () => {
       const response = await this.client.get<CheckLatestVersionResult>('/system/latest-version', {
-        params: { force },
+        params: {force},
       })
       return response.data
     })()
@@ -70,7 +85,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<{ success: boolean; message: string }>(
         '/ollama/configure-remote',
-        { remoteUrl }
+        {remoteUrl}
       )
       return response.data
     })()
@@ -78,7 +93,7 @@ class API {
 
   async deleteModel(model: string): Promise<{ success: boolean; message: string }> {
     return catchInternal(async () => {
-      const response = await this.client.delete('/ollama/models', { data: { model } })
+      const response = await this.client.delete('/ollama/models', {data: {model}})
       return response.data
     })()
   }
@@ -96,14 +111,14 @@ class API {
     resources: string[] | null
   }> {
     return catchInternal(async () => {
-      const response = await this.client.post('/maps/download-collection', { slug })
+      const response = await this.client.post('/maps/download-collection', {slug})
       return response.data
     })()
   }
 
   async downloadModel(model: string): Promise<{ success: boolean; message: string }> {
     return catchInternal(async () => {
-      const response = await this.client.post('/ollama/models', { model })
+      const response = await this.client.post('/ollama/models', {model})
       return response.data
     })()
   }
@@ -115,7 +130,7 @@ class API {
     resources: string[] | null
   }> {
     return catchInternal(async () => {
-      const response = await this.client.post('/zim/download-category-tier', { categorySlug, tierSlug })
+      const response = await this.client.post('/zim/download-category-tier', {categorySlug, tierSlug})
       return response.data
     })()
   }
@@ -124,7 +139,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<{ message: string; filename: string; url: string }>(
         '/maps/download-remote',
-        { url }
+        {url}
       )
       return response.data
     })()
@@ -134,7 +149,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<
         { filename: string; size: number } | { message: string }
-      >('/maps/download-remote-preflight', { url })
+      >('/maps/download-remote-preflight', {url})
       return response.data
     })()
   }
@@ -155,7 +170,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<{ message: string; filename: string; url: string }>(
         '/zim/download-remote',
-        { url, metadata }
+        {url, metadata}
       )
       return response.data
     })()
@@ -191,7 +206,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<{
         results: Array<{ resource_id: string; success: boolean; jobId?: string; error?: string }>
-      }>('/content-updates/apply-all', { updates })
+      }>('/content-updates/apply-all', {updates})
       return response.data
     })()
   }
@@ -227,7 +242,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<{ success: boolean; message: string }>(
         '/system/services/update',
-        { service_name: serviceName, target_version: targetVersion }
+        {service_name: serviceName, target_version: targetVersion}
       )
       return response.data
     })()
@@ -237,12 +252,12 @@ class API {
     try {
       const response = await this.client.post<{ success: boolean; message: string }>(
         `/system/services/force-reinstall`,
-        { service_name }
+        {service_name}
       )
       return response.data
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data?.message) {
-        return { success: false, message: error.response.data.message }
+        return {success: false, message: error.response.data.message}
       }
       console.error('Error force reinstalling service:', error)
       return undefined
@@ -253,7 +268,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.get<{ suggestions: string[] }>(
         '/chat/suggestions',
-        { signal }
+        {signal}
       )
       return response.data.suggestions
     })()
@@ -286,7 +301,7 @@ class API {
         models: NomadOllamaModel[]
         hasMore: boolean
       }>('/ollama/models', {
-        params: { sort: 'pulls', ...params },
+        params: {sort: 'pulls', ...params},
       })
       return response.data
     })()
@@ -307,8 +322,8 @@ class API {
     // Axios doesn't support ReadableStream in browser, so need to use fetch
     const response = await fetch('/api/ollama/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...chatRequest, stream: true }),
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({...chatRequest, stream: true}),
       signal,
     })
 
@@ -322,10 +337,10 @@ class API {
 
     try {
       while (true) {
-        const { done, value } = await reader.read()
+        const {done, value} = await reader.read()
         if (done) break
 
-        buffer += decoder.decode(value, { stream: true })
+        buffer += decoder.decode(value, {stream: true})
         const lines = buffer.split('\n')
         buffer = lines.pop() || ''
 
@@ -334,7 +349,9 @@ class API {
           let data: any
           try {
             data = JSON.parse(line.slice(6))
-          } catch { continue /* skip malformed chunks */ }
+          } catch {
+            continue /* skip malformed chunks */
+          }
 
           if (data.error) throw new Error('The model encountered an error. Please try again.')
 
@@ -404,7 +421,7 @@ class API {
         title: string
         model: string | null
         timestamp: string
-      }>('/chat/sessions', { title, model })
+      }>('/chat/sessions', {title, model})
       return response.data
     })()
   }
@@ -443,7 +460,7 @@ class API {
         role: 'system' | 'user' | 'assistant'
         content: string
         timestamp: string
-      }>(`/chat/sessions/${sessionId}/messages`, { role, content })
+      }>(`/chat/sessions/${sessionId}/messages`, {role, content})
       return response.data
     })()
   }
@@ -464,7 +481,11 @@ class API {
 
   async cleanupFailedEmbedJobs(): Promise<{ message: string; cleaned: number; filesDeleted: number } | undefined> {
     return catchInternal(async () => {
-      const response = await this.client.delete<{ message: string; cleaned: number; filesDeleted: number }>('/rag/failed-jobs')
+      const response = await this.client.delete<{
+        message: string;
+        cleaned: number;
+        filesDeleted: number
+      }>('/rag/failed-jobs')
       return response.data
     })()
   }
@@ -485,7 +506,7 @@ class API {
 
   async deleteRAGFile(source: string) {
     return catchInternal(async () => {
-      const response = await this.client.delete<{ message: string }>('/rag/files', { data: { source } })
+      const response = await this.client.delete<{ message: string }>('/rag/files', {data: {source}})
       return response.data
     })()
   }
@@ -531,12 +552,12 @@ class API {
     try {
       const response = await this.client.post<{ success: boolean; message: string }>(
         '/system/services/install',
-        { service_name }
+        {service_name}
       )
       return response.data
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data?.message) {
-        return { success: false, message: error.response.data.message }
+        return {success: false, message: error.response.data.message}
       }
       console.error('Error installing service:', error)
       return undefined
@@ -691,10 +712,10 @@ class API {
   }
 
   async listRemoteZimFiles({
-    start = 0,
-    count = 12,
-    query,
-  }: {
+                             start = 0,
+                             count = 12,
+                             query,
+                           }: {
     start?: number
     count?: number
     query?: string
@@ -724,7 +745,7 @@ class API {
       const response = await this.client.post<{
         message: string
         library: { id: number; name: string; base_url: string }
-      }>('/zim/custom-libraries', { name, base_url })
+      }>('/zim/custom-libraries', {name, base_url})
       return response.data
     })()
   }
@@ -741,7 +762,7 @@ class API {
       const response = await this.client.get<{
         directories: { name: string; url: string }[]
         files: { name: string; url: string; size_bytes: number | null }[]
-      }>('/zim/browse-library', { params: { url } })
+      }>('/zim/browse-library', {params: {url}})
       return response.data
     })()
   }
@@ -786,7 +807,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<RunBenchmarkResponse>(
         `/benchmark/run${sync ? '?sync=true' : ''}`,
-        { benchmark_type: type },
+        {benchmark_type: type},
       )
       return response.data
     })()
@@ -803,13 +824,13 @@ class API {
 
   async submitBenchmark(benchmark_id: string, anonymous: boolean) {
     try {
-      const response = await this.client.post<SubmitBenchmarkResponse>('/benchmark/submit', { benchmark_id, anonymous })
+      const response = await this.client.post<SubmitBenchmarkResponse>('/benchmark/submit', {benchmark_id, anonymous})
       return response.data
     } catch (error: any) {
       // For 409 Conflict errors, throw a specific error that the UI can handle
       if (error.response?.status === 409) {
         const err = new Error(error.response?.data?.error || 'This benchmark has already been submitted to the repository')
-          ; (err as any).status = 409
+        ;(err as any).status = 409
         throw err
       }
       // For other errors, extract the message and throw
@@ -822,7 +843,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<{ success: boolean; message: string }>(
         '/system/subscribe-release-notes',
-        { email }
+        {email}
       )
       return response.data
     })()
@@ -857,7 +878,7 @@ class API {
         success: boolean
         jobId?: string
         message?: string
-      }>('/zim/wikipedia/select', { optionId })
+      }>('/zim/wikipedia/select', {optionId})
       return response.data
     })()
   }
@@ -866,7 +887,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.post<UpdateBuilderTagResponse>(
         '/benchmark/builder-tag',
-        { benchmark_id, builder_tag }
+        {benchmark_id, builder_tag}
       )
       return response.data
     })()
@@ -893,7 +914,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.get<{ key: string; value: any }>(
         '/system/settings',
-        { params: { key } }
+        {params: {key}}
       )
       return response.data
     })()
@@ -903,7 +924,7 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.patch<{ success: boolean; message: string }>(
         '/system/settings',
-        { key, value }
+        {key, value}
       )
       return response.data
     })()
